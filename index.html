@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PHP2Shell-Check</title>
+<meta name="description" content="Kostenloser Selbstcheck: Ist Ihre Website von den kritischen PHP-Lücken PHP2Shell (CVE-2026-109618, CVE-2026-109619) betroffen? Adresse eingeben, Ergebnis und Fahrplan erhalten.">
+<meta property="og:title" content="PHP2Shell-Check: Ist meine Website betroffen?">
+<meta property="og:description" content="Adresse eingeben, Ergebnis in Sekunden: Ampel, Fahrplan und Mail-Vorlage für Hoster oder Agentur.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta name="theme-color" content="#F3F4F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1016" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='6' width='26' height='20' rx='4' fill='%234A4FC0'/%3E%3Ccircle cx='9' cy='16' r='2.5' fill='%23fff'/%3E%3Cpath d='M15 12h10M15 16h8M15 20h6' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* Layout: one 760px column. The check panel with a hang-tag verdict leads, the tailored action plan follows, reference material closes quietly. No external fonts: system DIN-style display face. */
+:root{
+  --bg:#F3F4F8;
+  --surface:#FFFFFF;
+  --ink:#141722;
+  --muted:#596074;
+  --line:#D9DCE6;
+  --accent:#4A4FC0;
+  --accent-soft:#E7E8FA;
+  --on-accent:#FFFFFF;
+  --code-bg:#ECEEF5;
+  --ok:#1E7543; --ok-bg:#E2F2E8;
+  --warn:#94580A; --warn-bg:#FAEEDA;
+  --bad:#B0261E; --bad-bg:#FAE3E1;
+  --font-display:"Bahnschrift","DIN Alternate","DIN 2014","Barlow Semi Condensed","Roboto Condensed","Arial Narrow",system-ui,sans-serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1016; --surface:#161922; --ink:#E6E8F0; --muted:#9CA3B6; --line:#2A2F3D;
+    --accent:#959AF5; --accent-soft:#23264A; --on-accent:#0E1016; --code-bg:#1E2230;
+    --ok:#5DCB8B; --ok-bg:#11251A; --warn:#EFB24E; --warn-bg:#2A200F; --bad:#FF8A7F; --bad-bg:#2D1513;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1016; --surface:#161922; --ink:#E6E8F0; --muted:#9CA3B6; --line:#2A2F3D;
+  --accent:#959AF5; --accent-soft:#23264A; --on-accent:#0E1016; --code-bg:#1E2230;
+  --ok:#5DCB8B; --ok-bg:#11251A; --warn:#EFB24E; --warn-bg:#2A200F; --bad:#FF8A7F; --bad-bg:#2D1513;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--font-body)}
+[hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;display:flex;flex-direction:column;gap:44px}
+a{color:var(--accent);text-underline-offset:2px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.1}
+h2{font-size:1.5rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:700}
+p,ul,ol,dl,dd{margin:0}
+code,pre{font-family:var(--font-mono)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.note{font-size:.9rem;color:var(--muted)}
+.label{font:700 .76rem/1.2 var(--font-display);text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.ic{font-family:var(--font-mono);font-size:.86em;background:var(--code-bg);padding:1px 6px;border-radius:5px;overflow-wrap:anywhere}
+
+/* Header */
+.top{display:flex;flex-direction:column;gap:14px}
+.advisory{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:600 .76rem/1.3 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--bad)}
+.advisory .dot{width:9px;height:9px;border-radius:50%;background:var(--bad);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+h1{font-size:clamp(2.1rem,1.2rem + 4vw,3.25rem);font-weight:700;letter-spacing:-.005em}
+.lede{font-size:1.1rem;max-width:60ch}
+
+/* Check panel */
+.check{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(18px,4vw,28px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,300px);gap:24px;align-items:start}
+.check-input{display:flex;flex-direction:column;gap:14px;min-width:0}
+.mode{display:inline-flex;gap:4px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;align-self:flex-start;max-width:100%;flex-wrap:wrap}
+.mode button{font:600 .9rem var(--font-body);padding:7px 14px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}
+.mode button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,23,34,.12)}
+.pane{display:flex;flex-direction:column;gap:10px;min-width:0}
+.url-row{display:flex;gap:8px;flex-wrap:wrap}
+.big-input{flex:1 1 220px;min-width:0;width:100%;font:600 clamp(1.15rem,1rem + 1vw,1.4rem)/1.2 var(--font-body);padding:.6em .7em;border:2px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.big-input.mono{font-family:var(--font-mono);font-size:clamp(1.6rem,1rem + 3vw,2.25rem);padding:.4em .55em;font-variant-numeric:tabular-nums}
+.big-input::placeholder{color:var(--muted);opacity:.6}
+.big-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.btn{font:600 .9rem var(--font-body);padding:9px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--on-accent);cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:disabled{opacity:.6;cursor:progress}
+.btn.go{font-size:1.05rem;padding:0 22px;min-height:52px}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:3px 10px;font-size:.75rem;border-radius:8px}
+.examples{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+.ex{font:.82rem var(--font-mono);padding:4px 10px;border:1px dashed var(--line);border-radius:999px;background:transparent;color:var(--ink);cursor:pointer}
+.ex:hover{border-color:var(--accent);color:var(--accent)}
+.check-note{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:14px}
+
+/* Hang tag verdict */
+.tag{--tone:var(--muted);--tone-bg:var(--bg);display:grid;grid-template-columns:56px minmax(0,1fr);border:2px solid var(--tone);border-radius:14px;background:var(--tone-bg);min-height:176px;overflow:hidden;transition:background-color .25s,border-color .25s}
+.tag[data-tone="ok"]{--tone:var(--ok);--tone-bg:var(--ok-bg)}
+.tag[data-tone="warn"]{--tone:var(--warn);--tone-bg:var(--warn-bg)}
+.tag[data-tone="bad"]{--tone:var(--bad);--tone-bg:var(--bad-bg)}
+.tag[data-busy="true"] .tag-verdict{animation:pulse 1.2s ease-in-out infinite}
+.tag-stub{background:var(--tone);color:var(--tone-bg);position:relative;display:flex;align-items:center;justify-content:center;padding:36px 0 14px;transition:background-color .25s}
+.tag-stub::after{content:"";position:absolute;right:-1px;top:0;bottom:0;border-right:2px dashed var(--tone-bg)}
+.tag-hole{position:absolute;top:13px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--surface)}
+.tag-ver{writing-mode:vertical-rl;transform:rotate(180deg);font:700 .98rem/1 var(--font-mono);letter-spacing:.04em;white-space:nowrap}
+.tag-body{padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tag-kicker{font:700 .72rem/1 var(--font-display);text-transform:uppercase;letter-spacing:.11em;color:var(--tone)}
+.tag-verdict{font:700 1.5rem/1.1 var(--font-display);color:var(--tone);text-transform:uppercase;letter-spacing:.01em}
+.tag-detail{font-size:.93rem}
+
+/* Findings */
+.findings{grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:var(--bg)}
+.findings-head{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.findings-host{font:600 .95rem var(--font-mono);overflow-wrap:anywhere}
+.flist{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 16px;font-size:.94rem}
+.flist dt{font-weight:700;color:var(--muted)}
+.flist dd{min-width:0;overflow-wrap:anywhere}
+.ev{display:flex;flex-wrap:wrap;gap:6px}
+.ev span{font:.78rem/1.3 var(--font-mono);padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--line)}
+.next{border-left:4px solid var(--accent);background:var(--surface);border-radius:0 10px 10px 0;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.next-actions{display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:480px){.flist{grid-template-columns:minmax(0,1fr)}.flist dd{margin-bottom:6px}}
+
+/* Situation */
+.section{display:flex;flex-direction:column;gap:18px}
+.section-head{display:flex;flex-direction:column;gap:4px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-weight:700;padding:0;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;cursor:pointer}
+.chip input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.chip span{display:inline-block;padding:7px 14px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface);font-size:.93rem;transition:background-color .15s,border-color .15s,color .15s}
+.chip:hover span{border-color:var(--accent)}
+.chip input:checked + span{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip input:focus-visible + span{outline:3px solid var(--accent);outline-offset:2px}
+.text-field{display:flex;flex-direction:column;gap:6px;max-width:420px}
+.text-field label{font-weight:700}
+.text-field input{font:1rem var(--font-body);padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.text-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+
+/* Plan */
+.plan-sub{color:var(--muted)}
+.steps{list-style:none;padding:0;counter-reset:s;border-top:1px solid var(--line)}
+.steps>li{counter-increment:s;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;padding:20px 0;border-bottom:1px solid var(--line)}
+.steps>li::before{content:counter(s);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 1.05rem/1 var(--font-display);background:var(--accent-soft);color:var(--accent)}
+.plan[data-tone="bad"] .steps>li:first-child::before{background:var(--bad);color:var(--bg)}
+.plan[data-tone="ok"] .steps>li:first-child::before{background:var(--ok);color:var(--bg)}
+.plan[data-tone="warn"] .steps>li:first-child::before{background:var(--warn);color:var(--bg)}
+.step-body{min-width:0;display:flex;flex-direction:column;gap:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Mail + code */
+.mail{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:10px}
+.mail-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.mail-row{display:flex;gap:8px;align-items:center}
+.mail-row input{flex:1;min-width:0;font:.9rem var(--font-body);padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.mail textarea{width:100%;min-height:340px;resize:vertical;font:.92rem/1.5 var(--font-body);padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.mail-actions{display:flex;justify-content:flex-end}
+.code{background:var(--code-bg);border-radius:10px;min-width:0}
+.code-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 8px 0 14px}
+.code-head span{font:.74rem var(--font-mono);color:var(--muted)}
+.code pre{margin:0;padding:8px 14px 14px;overflow-x:auto;font-size:.82rem;line-height:1.6;white-space:pre}
+
+/* Finder */
+.finder{border-top:1px solid var(--line)}
+details{border-bottom:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;padding:14px 0;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font:400 1.35rem/1 var(--font-mono);color:var(--accent);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+.det{padding:0 0 18px;display:flex;flex-direction:column;gap:10px}
+
+/* Reference */
+.ref{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+.ref-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.vt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vt th{text-align:left;font:700 .72rem/1.2 var(--font-display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:6px 10px 8px 0;border-bottom:1px solid var(--line)}
+.vt td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top;font-size:.92rem}
+.vt td.v{font-family:var(--font-mono);font-weight:600;white-space:nowrap}
+.vt tr.eol td.v{color:var(--bad)}
+.nohelp{list-style:none;padding:0;display:flex;flex-direction:column;gap:10px}
+.nohelp li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;font-size:.95rem}
+.nohelp li::before{content:"×";font:700 1.15rem/1.3 var(--font-mono);color:var(--bad)}
+.facts p{max-width:64ch}
+.timeline{list-style:none;padding:0;border-left:2px solid var(--line);margin-left:6px}
+.timeline li{position:relative;padding:0 0 18px 22px;display:flex;flex-direction:column;gap:2px}
+.timeline li:last-child{padding-bottom:0}
+.timeline li::before{content:"";position:absolute;left:-8px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.when{font:600 .8rem var(--font-mono);color:var(--muted)}
+.sources{display:flex;flex-direction:column;gap:6px;padding-left:1.1em;font-size:.92rem}
+footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:8px;font-size:.84rem;color:var(--muted)}
+.legal{display:flex;flex-wrap:wrap;gap:6px 18px}
+
+@media (max-width:680px){
+  .check{grid-template-columns:minmax(0,1fr)}
+  .ref{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="advisory"><span class="dot" aria-hidden="true"></span><span>Kritisch</span><span>CVE-2026-109618</span><span>CVE-2026-109619</span><span>CVSS 9.2</span></p>
+    <h1>Ist meine Website von PHP2Shell betroffen?</h1>
+    <p class="lede">Zwei Lücken in PHP erlauben Angriffe ohne Login, und erste Angriffe laufen bereits. Geben Sie die Adresse Ihrer Website ein: Der Check liest aus, was Ihr Server über PHP verrät, und sagt Ihnen, ob Sie handeln müssen und was zu tun ist.</p>
+  </header>
+
+  <section class="check" aria-label="Prüfung">
+    <div class="check-input">
+      <div class="mode" role="tablist" aria-label="Prüfart">
+        <button type="button" role="tab" id="tab-url" aria-selected="true" aria-controls="pane-url" data-mode="url">Website prüfen</button>
+        <button type="button" role="tab" id="tab-ver" aria-selected="false" aria-controls="pane-ver" data-mode="ver">PHP-Version eintippen</button>
+      </div>
+
+      <form class="pane" id="pane-url" role="tabpanel" aria-labelledby="tab-url" novalidate>
+        <label class="label" for="site-url">Adresse Ihrer Website</label>
+        <div class="url-row">
+          <input class="big-input" id="site-url" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="www.ihre-firma.de">
+          <button class="btn go" id="site-go" type="submit">Prüfen</button>
+        </div>
+        <p class="note">Wir rufen Ihre Startseite einmal ganz normal auf, wie ein Browser, und lesen, was der Server dabei von sich aus mitteilt. Es findet kein Angriff statt.</p>
+      </form>
+
+      <div class="pane" id="pane-ver" role="tabpanel" aria-labelledby="tab-ver" hidden>
+        <label class="label" for="php-version">Ihre PHP-Version</label>
+        <input class="big-input mono" id="php-version" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="8.3.14">
+        <p class="note">Die vollständige Nummer mit drei Teilen. <a href="#finden" data-scroll="finden">Wo finde ich die?</a></p>
+        <div class="examples"><span>Beispiele:</span>
+          <button type="button" class="ex" data-ex="8.3.14">8.3.14</button>
+          <button type="button" class="ex" data-ex="8.4.27">8.4.27</button>
+          <button type="button" class="ex" data-ex="7.4.33">7.4.33</button>
+          <button type="button" class="ex" data-ex="8.2.29-1~deb12u1">8.2.29-1~deb12u1</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tag" id="tag" data-tone="neutral" aria-live="polite">
+      <div class="tag-stub" aria-hidden="true"><span class="tag-hole"></span><span class="tag-ver" id="tag-ver">PHP ?</span></div>
+      <div class="tag-body">
+        <p class="tag-kicker">Ergebnis</p>
+        <p class="tag-verdict" id="tag-verdict">Noch offen</p>
+        <p class="tag-detail" id="tag-detail">Geben Sie die Adresse Ihrer Website ein. Das Ergebnis erscheint hier.</p>
+      </div>
+    </div>
+
+    <div class="findings" id="findings" hidden>
+      <div class="findings-head"><span class="label">Befund für</span><span class="findings-host" id="f-host"></span></div>
+      <dl class="flist" id="f-list"></dl>
+      <div class="next" id="f-next" hidden></div>
+    </div>
+
+    <p class="note check-note">Ob ein Server wirklich angreifbar ist, ließe sich von außen nur mit echten Angriffsversuchen testen. Deshalb zählt die PHP-Version. Die eingegebene Adresse wird für die Prüfung an unseren Prüfserver übermittelt und nicht gespeichert. Eine eingetippte Version verlässt Ihren Browser nicht.</p>
+  </section>
+
+  <section class="section" aria-labelledby="sit-h">
+    <div class="section-head">
+      <h2 id="sit-h">Ihre Situation</h2>
+      <p class="plan-sub">Zwei Angaben, damit der Fahrplan zu Ihnen passt. Was der Check erkennt, ist schon ausgewählt.</p>
+    </div>
+    <fieldset>
+      <legend>Womit ist die Website gebaut?</legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="system" value="wordpress" id="sys-wordpress"><span>WordPress</span></label>
+        <label class="chip"><input type="radio" name="system" value="typo3" id="sys-typo3"><span>TYPO3</span></label>
+        <label class="chip"><input type="radio" name="system" value="joomla" id="sys-joomla"><span>Joomla</span></label>
+        <label class="chip"><input type="radio" name="system" value="drupal" id="sys-drupal"><span>Drupal</span></label>
+        <label class="chip"><input type="radio" name="system" value="shop" id="sys-shop"><span>Online-Shop</span></label>
+        <label class="chip"><input type="radio" name="system" value="custom" id="sys-custom"><span>Andere PHP-Anwendung</span></label>
+        <label class="chip"><input type="radio" name="system" value="saas" id="sys-saas"><span>Baukasten wie Wix, Jimdo, Webflow</span></label>
+        <label class="chip"><input type="radio" name="system" value="unknown" id="sys-unknown"><span>Weiß ich nicht</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Wer betreibt den Server?</legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="operator" value="hoster" id="op-hoster"><span>Webhoster (Paket mit Kundenmenü)</span></label>
+        <label class="chip"><input type="radio" name="operator" value="agency" id="op-agency"><span>Agentur oder IT-Dienstleister</span></label>
+        <label class="chip"><input type="radio" name="operator" value="own" id="op-own"><span>Wir selbst, eigener Server</span></label>
+        <label class="chip"><input type="radio" name="operator" value="unknown" id="op-unknown"><span>Weiß ich nicht</span></label>
+      </div>
+    </fieldset>
+    <div class="text-field">
+      <label for="domain">Domain <span class="note">(für die Mail-Vorlage)</span></label>
+      <input id="domain" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="www.beispiel.de">
+    </div>
+  </section>
+
+  <section class="section plan" id="plan" data-tone="warn" aria-labelledby="plan-h">
+    <div class="section-head">
+      <h2 id="plan-h">Ihr Fahrplan</h2>
+      <p class="plan-sub" id="plan-sub">Erst Gewissheit, dann handeln.</p>
+    </div>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="section" id="finden" aria-labelledby="find-h">
+    <div class="section-head">
+      <h2 id="find-h">Wo finde ich meine PHP-Version?</h2>
+      <p class="plan-sub">Entscheidend ist die letzte Stelle: 8.3.14 ist betroffen, 8.3.36 nicht.</p>
+    </div>
+    <div class="finder">
+      <details id="f-wordpress" open>
+        <summary>WordPress</summary>
+        <div class="det">
+          <p><span class="ic">Werkzeuge → Website-Zustand → Bericht → Server</span>, Zeile „PHP-Version“. Direkt dorthin führt die Adresse <span class="ic">ihre-domain.de/wp-admin/site-health.php?tab=debug</span>.</p>
+          <p class="note">Ein WordPress-Update ändert die PHP-Version nicht. Das erledigt der Server.</p>
+        </div>
+      </details>
+      <details id="f-hosting">
+        <summary>Im Kundenmenü des Hosters</summary>
+        <div class="det">
+          <p>Melden Sie sich im Kundenmenü an und suchen Sie nach „PHP-Einstellungen“, „PHP-Version“ oder den Einstellungen Ihres Webspace. Dort steht oft nur die Linie, etwa „8.3“. Die vollständige Nummer zeigt dann Ihr CMS, oder der Hoster nennt sie auf Nachfrage.</p>
+        </div>
+      </details>
+      <details id="f-typo3">
+        <summary>TYPO3</summary>
+        <div class="det">
+          <p>Im Backend oben rechts das Menü „Systeminformationen“ öffnen, dort steht die PHP-Version. Alternativ unter <span class="ic">Admin Tools → Environment</span>.</p>
+        </div>
+      </details>
+      <details id="f-joomla">
+        <summary>Joomla</summary>
+        <div class="det">
+          <p><span class="ic">System → Systeminformationen</span>, Zeile „PHP-Version“.</p>
+        </div>
+      </details>
+      <details id="f-drupal">
+        <summary>Drupal</summary>
+        <div class="det">
+          <p><span class="ic">Berichte → Statusbericht</span>, Zeile „PHP“.</p>
+        </div>
+      </details>
+      <details id="f-server">
+        <summary>Auf dem eigenen Server</summary>
+        <div class="det" id="f-server-body">
+          <p><span class="ic">php -v</span> zeigt nur die Version der Kommandozeile. Die Website kann eine andere nutzen. Fragen Sie deshalb den Webserver-Prozess:</p>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="ref">
+    <div class="ref-col">
+      <h2>Diese Versionen sind sicher</h2>
+      <table class="vt">
+        <thead><tr><th scope="col">Linie</th><th scope="col">Sicher ab</th><th scope="col">Hinweis</th></tr></thead>
+        <tbody>
+          <tr><td>PHP 8.5</td><td class="v">8.5.12</td><td></td></tr>
+          <tr><td>PHP 8.4</td><td class="v">8.4.27</td><td></td></tr>
+          <tr><td>PHP 8.3</td><td class="v">8.3.36</td><td></td></tr>
+          <tr><td>PHP 8.2</td><td class="v">8.2.35</td><td>Updates nur noch bis 31.12.2026</td></tr>
+          <tr class="eol"><td>8.1 und älter</td><td class="v">keine</td><td>Umstieg nötig oder Backport des Anbieters</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Linux-Distributionen spielen Korrekturen teils ein, ohne die Nummer zu erhöhen (Backport). Dann gibt das Paket-Changelog Auskunft.</p>
+    </div>
+    <div class="ref-col">
+      <h2>Was nicht hilft</h2>
+      <ul class="nohelp">
+        <li><span>Updates von WordPress, TYPO3 &amp; Co. oder ihren Plugins. Die Lücke steckt in PHP selbst.</span></li>
+        <li><span>Der Wartungsmodus des CMS. PHP verarbeitet die Anfrage, bevor das CMS ihn überhaupt prüft.</span></li>
+        <li><span>Sicherheits-Plugins im CMS. Sie greifen erst, wenn PHP die Anfrage schon verarbeitet hat.</span></li>
+        <li><span>Fehlermeldungen ausblenden. Laut PHP-Advisory schützt das nicht.</span></li>
+        <li><span>Nur die Hauptwebsite prüfen. Webmail, Cloud-Speicher oder Intranet auf PHP sind genauso betroffen.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section facts" aria-labelledby="facts-h">
+    <h2 id="facts-h">Was ist passiert?</h2>
+    <p>PHP2Shell ist der Spitzname für zwei Lücken im PHP-Interpreter selbst: CVE-2026-109618 und CVE-2026-109619, beide mit CVSS 9.2 als kritisch eingestuft. Wer sie ausnutzt, kann ohne Anmeldung eigenen Code auf dem Webserver ausführen. Laut den Entdeckern lässt sich außerdem Arbeitsspeicher des Servers auslesen, in dem Passwörter oder Schlüssel stehen können.</p>
+    <p>Betroffen sind alle PHP-Versionen ab 5.4 aus dem Jahr 2012, schon in der Standardkonfiguration, ob PHP als Apache-Modul oder über PHP-FPM läuft. Das betrifft einen Großteil aller Websites, von WordPress über TYPO3 bis zu Online-Shops, Webmail und Cloud-Diensten.</p>
+    <ol class="timeline">
+      <li><span class="when">20. Oktober 2026</span><span>PHP kündigt ein Notfall-Update an. Erste Details sind da schon durchgesickert.</span></li>
+      <li><span class="when">21. Oktober, morgens</span><span>Cloudflare meldet erste Angriffe, noch bevor Updates verfügbar sind.</span></li>
+      <li><span class="when">21. Oktober, nachmittags</span><span>PHP veröffentlicht 8.5.12, 8.4.27, 8.3.36 und 8.2.35. Analysen und ein Angriffswerkzeug sind seitdem öffentlich.</span></li>
+      <li><span class="when">seitdem</span><span>Behörden und Hochschulen nehmen PHP-Seiten vorsorglich vom Netz. Sicherheitsfirmen beobachten aktive Angriffsversuche.</span></li>
+    </ol>
+  </section>
+
+  <section class="section" aria-labelledby="src-h">
+    <h2 id="src-h">Quellen</h2>
+    <ul class="sources">
+      <li><a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w" target="_blank" rel="noopener">PHP-Advisory zu CVE-2026-109618</a></li>
+      <li><a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp" target="_blank" rel="noopener">PHP-Advisory zu CVE-2026-109619</a></li>
+      <li><a href="https://cert.europa.eu/publications/security-advisories/2026-018/" target="_blank" rel="noopener">CERT-EU Security Advisory 2026-018</a></li>
+      <li><a href="https://sansec.io/research/php2shell" target="_blank" rel="noopener">Sansec: PHP2Shell</a></li>
+      <li><a href="https://watchtowr.com/intelligence/php-cve-2026-109618-faq/" target="_blank" rel="noopener">watchTowr: FAQ zu PHP2Shell</a></li>
+      <li><a href="https://www.security-insider.de/kritische-php-schwachstellen-behoerden-offline-a-607c4678fa935b333a4c48f8efaca22e/" target="_blank" rel="noopener">Security-Insider: Behörden gehen offline</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Stand: 22. Oktober 2026. Die Lage entwickelt sich. Maßgeblich sind die Hinweise des PHP-Projekts und Ihres Anbieters. Ohne Gewähr, ersetzt keine Prüfung durch Fachleute.</p>
+    <p>Datenschutz beim Website-Check: Die eingegebene Adresse geht an unseren Prüfserver (Vercel, Region Frankfurt), der Ihre Startseite einmal abruft. Wir speichern weder die Adresse noch das Ergebnis.</p>
+    <p class="legal"><span>Ein kostenloses Werkzeug von <a href="https://stefanai.de" target="_blank" rel="noopener">StefanAI</a></span><a href="https://stefanai.de/impressum" target="_blank" rel="noopener">Impressum</a><a href="https://stefanai.de/datenschutz" target="_blank" rel="noopener">Datenschutz</a></p>
+  </footer>
+
+</div>
+
+<div hidden id="holder">
+  <div class="mail" id="mail-block">
+    <div class="mail-head"><span class="label">Mail-Vorlage</span><span class="note">Domain und Version sind schon eingesetzt.</span></div>
+    <label class="sr" for="mail-subject">Betreff</label>
+    <div class="mail-row"><input id="mail-subject" type="text" readonly><button class="btn ghost" type="button" data-copy="mail-subject">Betreff kopieren</button></div>
+    <label class="sr" for="mail-body">Nachricht</label>
+    <textarea id="mail-body" readonly rows="16"></textarea>
+    <div class="mail-actions"><button class="btn" type="button" data-copy="mail-body">Text kopieren</button></div>
+  </div>
+</div>
+
+<script>
+// <parse>
+const FIXED = { "8.5": 12, "8.4": 27, "8.3": 36, "8.2": 35 };
+function parseVersion(raw) {
+  const s = String(raw || "").trim().replace(/,/g, ".");
+  if (!s) return { kind: "empty" };
+  const m = s.match(/(\d{1,2})\.(\d{1,2})(?:\.(\d{1,3}))?(\S*)/);
+  if (!m) return { kind: "invalid" };
+  const maj = +m[1], min = +m[2];
+  const patch = m[3] === undefined ? null : +m[3];
+  const suffix = m[4] || "";
+  if (maj < 4 || maj > 9 || maj === 6) return { kind: "invalid" };
+  const distro = /^[-~+]/.test(suffix) || /ubuntu|deb\d|el\d|fc\d|suse|alpine/i.test(suffix);
+  const branch = maj + "." + min;
+  const label = patch === null ? branch : branch + "." + patch;
+  const base = { maj, min, patch, branch, label, distro };
+  if (maj > 8 || (maj === 8 && min > 5)) return { ...base, kind: "newer" };
+  if (maj === 8 && min >= 2) {
+    const fix = branch + "." + FIXED[branch];
+    if (patch === null) return { ...base, kind: "incomplete", fix };
+    if (patch >= FIXED[branch]) return { ...base, kind: "safe", fix };
+    return { ...base, kind: distro ? "backport" : "vulnerable", fix };
+  }
+  if (maj < 5 || (maj === 5 && min < 4)) return { ...base, kind: "ancient" };
+  return { ...base, kind: distro ? "backport-eol" : "eol" };
+}
+// </parse>
+
+const $ = (s) => document.querySelector(s);
+const vInput = $("#php-version");
+const siteInput = $("#site-url");
+const domainInput = $("#domain");
+const mailBlock = $("#mail-block");
+const mailSubject = mailBlock.querySelector("#mail-subject");
+const mailBody = mailBlock.querySelector("#mail-body");
+const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let mode = "url";
+let scanState = "idle";   // idle | loading | done | error
+let scan = null;          // API result
+let scanError = "";
+let userPickedSystem = false;
+let cur = { kind: "empty" };
+
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const codeBlock = (label, code) =>
+  `<div class="code"><div class="code-head"><span>${esc(label)}</span><button type="button" class="btn ghost small" data-copy>Kopieren</button></div><pre><code>${esc(code)}</code></pre></div>`;
+
+function radioVal(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : null;
+}
+function setRadio(name, value) {
+  const el = document.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (el) el.checked = true;
+}
+function br() {
+  return cur.branch && /^[578]\.\d$/.test(cur.branch) ? cur.branch : "8.3";
+}
+function hostOf(u) { try { return new URL(u).host; } catch { return u; } }
+const scanOk = () => mode === "url" && scanState === "done" && scan;
+
+/* ---------- Verdict for a version ---------- */
+function verdict(v, system) {
+  switch (v.kind) {
+    case "empty":
+      return system === "saas"
+        ? { tone: "ok", title: "Kein eigenes PHP", detail: "Bei Baukasten-Diensten betreibt der Anbieter die Server. Sie müssen hier nichts patchen." }
+        : { tone: "neutral", title: "Noch offen", detail: "Geben Sie Ihre PHP-Version ein. Sie kennen sie nicht? Der Fahrplan unten hilft trotzdem weiter." };
+    case "invalid":
+      return { tone: "neutral", title: "Unklares Format", detail: "Eine PHP-Version sieht so aus: 8.3.14. Bitte prüfen Sie die Eingabe." };
+    case "incomplete":
+      return { tone: "warn", title: "Letzte Stelle fehlt", detail: `Bei PHP ${v.branch} entscheidet die letzte Zahl. Sicher ist ab ${v.fix}.` };
+    case "safe":
+      return { tone: "ok", title: "Gepatcht", detail: `${v.label} enthält die Korrekturen (sicher ab ${v.fix}).` + (v.branch === "8.2" ? " PHP 8.2 bekommt nur noch bis 31.12.2026 Updates." : "") };
+    case "vulnerable":
+      return { tone: "bad", title: "Betroffen", detail: `PHP ${v.label} ist verwundbar. Das Update auf ${v.fix} oder neuer schließt die Lücken.` };
+    case "backport":
+      return { tone: "warn", title: "Backport prüfen", detail: `Die Nummer liegt unter ${v.fix}, trägt aber einen Distributions-Zusatz. Ob die Korrektur eingespielt ist, zeigt das Paket-Changelog.` };
+    case "eol":
+      return { tone: "bad", title: "Betroffen, kein Update", detail: `Für PHP ${v.branch} gibt es keine offizielle Korrektur. Nötig ist der Umstieg auf PHP 8.4 oder 8.5.` };
+    case "backport-eol":
+      return { tone: "warn", title: "Nur mit Backport sicher", detail: `PHP ${v.branch} bekommt offiziell keine Korrektur mehr. Ihre Nummer hat einen Distributions-Zusatz: Das Paket-Changelog zeigt, ob nachgebessert wurde.` };
+    case "ancient":
+      return { tone: "bad", title: "Veraltet", detail: `PHP ${v.branch} bekommt seit über zehn Jahren keine Sicherheitsupdates. Unabhängig von PHP2Shell: sofort ersetzen.` };
+    case "newer":
+      return { tone: "warn", title: "Nicht in der Liste", detail: `PHP ${v.label} ist neuer als alle betroffenen Linien. Ist es eine Vorabversion, prüfen Sie, ob sie nach dem 21.10.2026 erschienen ist.` };
+  }
+}
+
+/* ---------- Verdict for the website check ---------- */
+function urlVerdict(system) {
+  if (scanState === "idle") return { tone: "neutral", title: "Noch offen", detail: "Geben Sie die Adresse Ihrer Website ein. Das Ergebnis erscheint hier." };
+  if (scanState === "loading") return { tone: "neutral", title: "Prüfe …", detail: "Ihre Startseite wird abgerufen. Das dauert meist nur wenige Sekunden.", busy: true };
+  if (scanState === "error") return { tone: "neutral", title: "Nicht prüfbar", detail: scanError + " Sie können die PHP-Version auch direkt eintippen." };
+  if (scan.php.version) {
+    const vd = verdict(cur, system);
+    return { ...vd, detail: vd.detail + ` Gemeldet vom Server selbst (Header ${scan.php.versionSource}).` };
+  }
+  if (scan.saas) return { tone: "ok", title: "Kein eigenes PHP", detail: `Ihre Website läuft auf ${scan.saas}. Die Server betreibt der Anbieter, Sie müssen hier nichts patchen.` };
+  if (scan.php.detected === "yes") {
+    const what = scan.platform ? scan.platform.name : "Ihre Website";
+    return { tone: "warn", title: "PHP, Nummer verborgen", detail: `${what} läuft auf PHP. Welche Version, verrät Ihr Server nicht. Das ist gut so, Sie müssen sie nur kurz nachsehen.` };
+  }
+  if (scan.blocked) return { tone: "neutral", title: "Abruf blockiert", detail: "Ihre Website lässt automatische Abrufe nicht zu, etwa wegen eines Bot-Schutzes. Sehen Sie die Version bitte direkt nach." };
+  return { tone: "neutral", title: "Keine PHP-Spuren", detail: "Beim Abruf fanden sich keine Hinweise auf PHP. Das ist ein gutes Zeichen, aber kein Beweis." };
+}
+
+/* ---------- Plan building blocks ---------- */
+const SYS_HINT = {
+  wordpress: "In WordPress: <span class=\"ic\">Werkzeuge → Website-Zustand → Bericht → Server</span>.",
+  typo3: "In TYPO3: Menü „Systeminformationen“ oben rechts im Backend.",
+  joomla: "In Joomla: <span class=\"ic\">System → Systeminformationen</span>.",
+  drupal: "In Drupal: <span class=\"ic\">Berichte → Statusbericht</span>.",
+};
+const findLink = ' <a href="#finden" data-scroll="finden">Alle Anleitungen</a>';
+const typeItBtn = '<button type="button" class="btn ghost" data-mode-switch="ver">Nummer hier eintippen</button>';
+
+const snip = {
+  version: () => codeBlock("Version des Webserver-Prozesses", `php-fpm${br()} -v      # Debian/Ubuntu, Version anpassen\nphp-fpm -v         # RHEL, AlmaLinux, Rocky`),
+  update: () =>
+    codeBlock("Debian / Ubuntu", "sudo apt update && sudo apt upgrade") +
+    codeBlock("RHEL / AlmaLinux / Rocky", "sudo dnf upgrade 'php*'") +
+    codeBlock("Docker (offizielle Images): neu ziehen, dann Container neu bauen", `docker pull php:${cur.kind === "vulnerable" || cur.kind === "backport" ? cur.branch : "8.4"}-fpm`),
+  restart: () =>
+    codeBlock("Je nach Setup eine dieser Zeilen", `sudo systemctl restart php${br()}-fpm   # PHP-FPM, Debian/Ubuntu\nsudo systemctl restart php-fpm        # PHP-FPM, RHEL & Co.\nsudo systemctl restart apache2        # PHP als Apache-Modul (RHEL: httpd)`),
+  mitigate: () =>
+    codeBlock("php.ini oder eigene Datei in conf.d (PHP als Apache-Modul)", "session.upload_progress.enabled = 0\nmemory_limit = -1\n; zusätzlich nur bei PHP 8.5:\nfatal_error_backtraces = 0") +
+    codeBlock("PHP-FPM: in jedem Pool", `; z. B. /etc/php/${br()}/fpm/pool.d/www.conf\nphp_admin_flag[session.upload_progress.enabled] = off\nphp_admin_value[memory_limit] = -1\n; zusätzlich nur bei PHP 8.5:\nphp_admin_flag[fatal_error_backtraces] = off`),
+  forensics: () =>
+    codeBlock("PHP-Dateien, die seit dem 20.10. neu sind oder geändert wurden", "sudo find /var/www -name '*.php' -newermt '2026-10-20' -ls") +
+    codeBlock("Abstürze und Speicherüberläufe in den Logs (Pfade anpassen)", "sudo grep -iE 'segmentation fault|signal 11|memory size of .* exhausted' \\\n  /var/log/apache2/error.log /var/log/php*-fpm.log") +
+    codeBlock("Geplante Aufgaben des Webserver-Benutzers", "sudo crontab -l -u www-data"),
+  changelog: () =>
+    codeBlock("Debian / Ubuntu (Paketname anpassen)", `apt changelog php${br()}-fpm | grep -E 'CVE-2026-10961[89]'`) +
+    codeBlock("RHEL / AlmaLinux / Rocky", "rpm -q --changelog php-fpm | grep -E 'CVE-2026-10961[89]'"),
+};
+
+function credentialsStep(op) {
+  return op === "own"
+    ? { t: "Zugangsdaten wechseln", h: "<p>Die Lücken erlauben laut den Entdeckern auch, Arbeitsspeicher auszulesen. Wechseln Sie Datenbank-Passwörter, API-Schlüssel und andere Geheimnisse der Anwendungen und beenden Sie aktive Sitzungen.</p>" }
+    : { t: "Nach dem Update: Zugangsdaten wechseln", h: "<p>Die Lücken erlauben laut den Entdeckern auch, Arbeitsspeicher auszulesen. Wechseln Sie Admin-, SFTP- und Datenbank-Passwörter sowie API-Schlüssel, die die Website nutzt.</p>" };
+}
+const otherAppsStep = { t: "Andere PHP-Anwendungen mitdenken", h: "<p>Webmail, Cloud-Speicher, Intranet, Shop, Ticket- oder Buchungssystem: Alles, was aus dem Internet erreichbar ist und auf PHP läuft, braucht dasselbe Update.</p>" };
+const forensicsText = "<p class=\"note\">Ein Treffer ist kein Beweis, aber ein Grund, genauer hinzusehen. Prüfen Sie auch, ob im CMS neue Admin-Konten aufgetaucht sind. Bei Hinweisen auf einen Einbruch ziehen Sie Fachleute hinzu. Sind personenbezogene Daten betroffen, gilt die 72-Stunden-Meldefrist an die Datenschutzaufsicht (Art. 33 DSGVO).</p>";
+
+function adminStepHtml(admin) {
+  return `<p>Melden Sie sich an, der Link führt direkt zur richtigen Seite. Dort: ${esc(admin.where)}.</p>` +
+    `<div class="actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>`;
+}
+
+function buildPlan(v, system, op) {
+  const k = v.kind;
+  const s = scanOk() ? scan : null;
+  let group;
+  if (system === "saas" && (k === "empty" || k === "invalid")) group = "saas";
+  else if (k === "safe") group = "safe";
+  else if (k === "vulnerable" || k === "eol" || k === "ancient") group = "act";
+  else if (k === "backport" || k === "backport-eol") group = "verify";
+  else if (k === "newer") group = "newer";
+  else group = "find";
+
+  const steps = [];
+  const mailStep = (t, h) => ({ t, h, node: mailBlock });
+  const isOwn = op === "own";
+  const upgradeOnly = k === "eol" || k === "ancient";
+
+  if (group === "saas") {
+    steps.push({ t: "Nichts zu patchen", h: "<p>Baukasten-Dienste wie Wix, Jimdo, Webflow, Squarespace oder Shopify betreiben ihre Server selbst. Das Update ist Sache des Anbieters.</p>" });
+    steps.push({ t: "Zusatzdienste prüfen", h: "<p>Haben Sie daneben eigene PHP-Anwendungen bei einem Hoster, etwa Webmail, ein Formular-Skript, einen Shop oder eine Cloud? Dann prüfen Sie diese ebenfalls.</p>" });
+    return { tone: "ok", sub: "Für die Website selbst ist wenig zu tun.", steps };
+  }
+
+  if (group === "safe") {
+    if (isOwn) steps.push({ t: "Prüfen, ob die Website diese Version nutzt", h: "<p>Stammt die Nummer aus <span class=\"ic\">php -v</span>, zeigt sie nur die Kommandozeile. Kontrollieren Sie die Version in einer echten Web-Anfrage, etwa in der Systeminfo des CMS, und ob alle PHP-Prozesse nach dem Update neu gestartet wurden.</p>" + snip.restart() });
+    steps.push(isOwn
+      ? { t: "Zeit vor dem Update prüfen", h: "<p>Erste Angriffe gab es am Morgen des 21. Oktober, noch vor den Updates. Wurde erst danach gepatcht, lohnt ein Blick auf Spuren.</p>" + snip.forensics() + forensicsText }
+      : { t: "Zeit vor dem Update prüfen", h: "<p>Erste Angriffe gab es am Morgen des 21. Oktober, noch vor den Updates. Fragen Sie Hoster oder Dienstleister, wann gepatcht wurde und ob es Auffälligkeiten gab.</p>" });
+    if (v.branch === "8.2") steps.push({ t: "Umstieg planen", h: "<p>PHP 8.2 bekommt nur noch bis 31.12.2026 Sicherheitsupdates. Planen Sie den Wechsel auf 8.4 oder 8.5 und testen Sie vorher, ob CMS und Erweiterungen mitspielen.</p>" });
+    steps.push(otherAppsStep);
+    return { tone: "ok", sub: "Ihre Version ist in Ordnung. Ein paar Punkte bleiben.", steps };
+  }
+
+  if (group === "act") {
+    if (isOwn) {
+      steps.push({ t: "PHP aktualisieren", h: (upgradeOnly
+        ? `<p>Für PHP ${v.branch} gibt es keine offizielle Korrektur. Steigen Sie auf 8.4 oder 8.5 um, oder nutzen Sie ein Distributionspaket mit Backport und prüfen Sie dessen Changelog. Vorher Sicherung anlegen und Kompatibilität der Anwendungen testen.</p>`
+        : `<p>Ziel ist ${v.fix} oder neuer, bzw. das Paket Ihrer Distribution mit den Korrekturen.</p>`) + snip.update() });
+      steps.push({ t: "Alle PHP-Prozesse neu starten", h: "<p>Erst nach dem Neustart laufen die korrigierten Fassungen. Prüfen Sie die Version danach über die Website selbst, nicht nur mit <span class=\"ic\">php -v</span>.</p>" + snip.restart() });
+      steps.push({ t: "Falls das Update warten muss", h: "<p>Diese Einstellungen aus den PHP-Advisories sind nur ein Teilschutz und ersetzen das Update nicht. Danach alle Worker neu starten.</p>" + snip.mitigate() + "<p class=\"note\">Mit <span class=\"ic\">memory_limit = -1</span> kann eine einzelne Anfrage den ganzen Arbeitsspeicher belegen. Beobachten Sie die Auslastung und stellen Sie das Limit nach dem Update zurück. Weitere Optionen: Anfragen mit <span class=\"ic\">multipart/form-data</span> am Webserver oder in der WAF sperren (das bricht Datei-Uploads und manche Formulare) oder die Seite durch eine statische Wartungsseite ersetzen.</p>" });
+      steps.push({ t: "Spuren prüfen", h: "<p>Angriffe liefen schon vor den Updates. Schauen Sie nach, ob seit dem 20. Oktober etwas Ungewöhnliches passiert ist.</p>" + snip.forensics() + forensicsText });
+      steps.push(credentialsStep(op));
+    } else if (op === "hoster") {
+      steps.push({ t: upgradeOnly ? "Auf PHP 8.4 oder 8.5 umstellen" : "Korrigierte Version aktivieren", h: upgradeOnly
+        ? "<p>Im Kundenmenü lässt sich die PHP-Version meist selbst umstellen. Legen Sie vorher eine Sicherung an und prüfen Sie, ob Ihr CMS und alle Erweiterungen die neue Version unterstützen.</p>"
+        : `<p>Prüfen Sie im Kundenmenü unter „PHP-Einstellungen“ o. ä., ob ${v.fix} oder neuer verfügbar ist. Die letzte Stelle der Nummer setzt der Hoster; fehlt die Korrektur, muss er nachliefern.</p>` });
+      steps.push(mailStep("Hoster schriftlich fragen", "<p>So haben Sie eine verbindliche Antwort, auch zu Übergangsmaßnahmen und möglichen Angriffen.</p>"));
+      steps.push({ t: "Bis dahin: Risiko senken", h: "<p>Geht das Update nicht heute, lassen Sie die Seite vorübergehend durch eine statische Wartungsseite ersetzen. Der Wartungsmodus von WordPress &amp; Co. schützt nicht.</p>" });
+      steps.push(credentialsStep(op));
+    } else if (op === "agency") {
+      steps.push(mailStep("Dienstleister heute anschreiben", "<p>Das Update muss auf dem Server passieren. Ein CMS- oder Plugin-Update reicht nicht.</p>"));
+      steps.push({ t: "Übergangslösung vereinbaren", h: "<p>Klappt das Update nicht heute, bitten Sie um eine statische Wartungsseite oder darum, Datei-Upload-Anfragen am Webserver zu sperren, bis gepatcht ist.</p>" });
+      steps.push(credentialsStep(op));
+    } else {
+      steps.push({ t: "Zuständige Stelle herausfinden", h: "<p>Wer stellt Webhosting oder Domain in Rechnung? Steht in Vertrag oder Impressum eine Agentur? Diese Stelle muss das Update einspielen. Wählen Sie oben aus, wer es ist, dann passt sich der Fahrplan an.</p>" });
+      steps.push(mailStep("Schriftlich nachfragen", "<p>Die Vorlage fragt nach Version, Zeitplan, Übergangsmaßnahmen und Angriffsspuren.</p>"));
+      steps.push(credentialsStep(op));
+    }
+    return { tone: "bad", sub: "Handeln Sie heute. Angriffe laufen bereits.", steps };
+  }
+
+  if (group === "verify") {
+    if (isOwn) {
+      steps.push({ t: "Paket-Changelog prüfen", h: "<p>Taucht dort CVE-2026-109618 und CVE-2026-109619 auf, ist Ihr Paket korrigiert, auch wenn die Nummer kleiner ist.</p>" + snip.changelog() });
+      steps.push({ t: "Kein Eintrag? Dann aktualisieren", h: "<p>Paketquellen aktualisieren, danach alle PHP-Prozesse neu starten.</p>" + snip.update() + snip.restart() });
+      steps.push({ t: "Spuren prüfen", h: "<p>Angriffe liefen schon vor den Updates.</p>" + snip.forensics() + forensicsText });
+    } else {
+      steps.push(mailStep(op === "agency" ? "Beim Dienstleister nachfragen" : op === "hoster" ? "Beim Hoster nachfragen" : "Beim Betreiber nachfragen", "<p>Ob ein Backport eingespielt ist, kann nur der Betreiber des Servers sicher sagen.</p>"));
+    }
+    steps.push(otherAppsStep);
+    return { tone: "warn", sub: "Wahrscheinlich gut, aber erst Gewissheit holen.", steps };
+  }
+
+  if (group === "newer") {
+    steps.push({ t: "Veröffentlichungsdatum prüfen", h: "<p>Erschien die Version nach dem 21. Oktober 2026, enthält sie die Korrekturen. Bei Vorabversionen (RC, Beta) lieber auf eine stabile, korrigierte Version wechseln.</p>" });
+    steps.push(otherAppsStep);
+    return { tone: "warn", sub: "Vermutlich unkritisch.", steps };
+  }
+
+  // find
+  let sub = "Erst Gewissheit, dann handeln.";
+  const admin = s && s.platform && s.platform.admin;
+  if (admin) {
+    steps.push({ t: `Version in ${s.platform.name.replace(" mit WooCommerce", "")} nachsehen`, h: adminStepHtml(admin) });
+    sub = "Ihre Website läuft auf PHP. Jetzt fehlt nur die genaue Versionsnummer.";
+  } else {
+    const hint = SYS_HINT[system] || "Im Kundenmenü des Hosters, in der Systeminfo Ihres CMS oder per Nachfrage.";
+    const intro = k === "incomplete" ? `Sie brauchen alle drei Stellen, also etwa ${v.fix}. ` : "";
+    steps.push({ t: k === "incomplete" ? "Vollständige Nummer ermitteln" : "PHP-Version herausfinden", h: `<p>${intro}${hint}${findLink}</p>` + (mode === "url" ? `<div class="actions">${typeItBtn}</div>` : "") });
+    if (s && s.php.detected === "yes") sub = "Ihre Website läuft auf PHP. Jetzt fehlt nur die genaue Versionsnummer.";
+    if (s && s.php.detected !== "yes" && !s.saas) sub = "Keine PHP-Spuren gefunden. Sicherheitshalber kurz nachsehen.";
+  }
+  if (isOwn) {
+    steps.push({ t: "Auf dem Server nachsehen", h: "<p><span class=\"ic\">php -v</span> zeigt nur die Kommandozeile. Fragen Sie den Webserver-Prozess:</p>" + snip.version() });
+  } else {
+    steps.push(mailStep(op === "hoster" ? "Oder direkt beim Hoster fragen" : op === "agency" ? "Oder direkt beim Dienstleister fragen" : "Oder direkt beim Betreiber fragen",
+      "<p>Geht schneller, wenn Sie selbst keinen Zugang haben. Die Vorlage fragt auch nach Übergangsmaßnahmen und Angriffsspuren.</p>"));
+  }
+  return { tone: "warn", sub, steps };
+}
+
+/* ---------- Findings box ---------- */
+function renderFindings() {
+  const box = $("#findings");
+  if (!(scanState === "done" && scan)) { box.hidden = true; return; }
+  box.hidden = false;
+  $("#f-host").textContent = hostOf(scan.finalUrl);
+  const rows = [];
+  const phpText = scan.php.version
+    ? `PHP ${scan.php.version}, gemeldet im Header ${scan.php.versionSource}`
+    : scan.saas ? `kein eigenes PHP (${scan.saas})`
+    : scan.php.detected === "yes" ? "ja, Version nicht öffentlich"
+    : scan.blocked ? "nicht feststellbar, Abruf blockiert"
+    : "keine Hinweise gefunden";
+  rows.push(["PHP", esc(phpText)]);
+  rows.push(["System", scan.platform ? esc(scan.platform.name + (scan.platform.version ? " " + scan.platform.version : "")) : scan.saas ? esc(scan.saas) : "nicht erkannt"]);
+  rows.push(["Antwort", esc(`Status ${scan.status}` + (scan.hops > 1 ? `, nach ${scan.hops - 1} Weiterleitung${scan.hops > 2 ? "en" : ""}` : ""))]);
+  if (scan.certProblem) rows.push(["Zertifikat", "ungültig oder abgelaufen. Bitte unabhängig von PHP2Shell beheben lassen."]);
+  if (scan.evidence && scan.evidence.length) rows.push(["Hinweise", `<div class="ev">${scan.evidence.map((e) => `<span>${esc(e)}</span>`).join("")}</div>`]);
+  $("#f-list").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+
+  const next = $("#f-next");
+  const admin = scan.platform && scan.platform.admin;
+  if (mode === "url" && !scan.php.version && scan.php.detected === "yes" && admin) {
+    next.hidden = false;
+    next.innerHTML = `<p><strong>So finden Sie die Nummer in einer Minute:</strong> In ${esc(scan.platform.name.replace(" mit WooCommerce", ""))} anmelden, dann ${esc(admin.where)}.</p><div class="next-actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>`;
+  } else next.hidden = true;
+}
+
+/* ---------- Mail ---------- */
+function updateMail() {
+  const d = domainInput.value.trim();
+  const target = d || "unsere Website";
+  const known = cur.label && cur.kind !== "invalid";
+  const ver = known ? `\n\nBei uns wird derzeit PHP ${cur.label} angezeigt.` : "";
+  mailSubject.value = `PHP2Shell (CVE-2026-109618, CVE-2026-109619): Stand für ${target}`;
+  mailBody.value =
+`Guten Tag,
+
+am 21. Oktober 2026 hat das PHP-Projekt Sicherheitsupdates für zwei kritische Lücken veröffentlicht (CVE-2026-109618 und CVE-2026-109619, bekannt als „PHP2Shell“). Darüber können Angreifer ohne Anmeldung eigenen Code auf dem Webserver ausführen. Erste Angriffe wurden bereits beobachtet.${ver}
+
+Bitte teilen Sie uns für ${target} mit:
+
+1. Welche PHP-Version läuft dort aktuell (vollständige Nummer, z. B. 8.3.36)?
+2. Enthält sie die Korrekturen, also PHP 8.5.12, 8.4.27, 8.3.36, 8.2.35 oder neuer bzw. ein Paket mit eingespieltem Backport?
+3. Falls nein: Bis wann wird aktualisiert, und welche Übergangsmaßnahmen sind bis dahin aktiv?
+4. Gab es seit dem 20. Oktober Hinweise auf Angriffe oder Auffälligkeiten?
+5. Laufen für uns weitere PHP-Anwendungen (z. B. Webmail, Shop, Cloud), die ebenfalls aktualisiert werden müssen?
+
+Vielen Dank für eine kurze Rückmeldung.
+
+Mit freundlichen Grüßen
+`;
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const versionText = mode === "ver" ? vInput.value : (scanOk() && scan.php.version) || "";
+  cur = parseVersion(versionText);
+  const system = radioVal("system");
+  const op = radioVal("operator");
+
+  const vd = mode === "ver" ? verdict(cur, system) : urlVerdict(system);
+  const tag = $("#tag");
+  tag.dataset.tone = vd.tone;
+  tag.dataset.busy = vd.busy ? "true" : "false";
+  const stub = cur.label && cur.kind !== "invalid" ? "PHP " + cur.label
+    : (mode === "url" && scanOk() && scan.saas && !scan.php.version) ? "KEIN PHP" : "PHP ?";
+  $("#tag-ver").textContent = stub;
+  $("#tag-verdict").textContent = vd.title;
+  $("#tag-detail").textContent = vd.detail;
+
+  renderFindings();
+
+  const plan = buildPlan(cur, system, op);
+  $("#plan").dataset.tone = plan.tone;
+  $("#plan-sub").textContent = plan.sub;
+  const list = $("#steps");
+  list.innerHTML = "";
+  for (const s of plan.steps) {
+    const li = document.createElement("li");
+    const body = document.createElement("div");
+    body.className = "step-body";
+    body.innerHTML = `<h3>${s.t}</h3>${s.h || ""}`;
+    if (s.node) body.appendChild(s.node);
+    li.appendChild(body);
+    list.appendChild(li);
+  }
+  updateMail();
+}
+
+/* ---------- Mode switch ---------- */
+function setMode(m, focus) {
+  mode = m;
+  $("#tab-url").setAttribute("aria-selected", String(m === "url"));
+  $("#tab-ver").setAttribute("aria-selected", String(m === "ver"));
+  $("#pane-url").hidden = m !== "url";
+  $("#pane-ver").hidden = m !== "ver";
+  if (m === "ver" && !vInput.value && scanOk() && scan.php.version) vInput.value = scan.php.version;
+  render();
+  if (focus) {
+    const el = m === "ver" ? vInput : siteInput;
+    el.focus({ preventScroll: true });
+    el.closest(".check").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }
+}
+
+/* ---------- Website check ---------- */
+async function runScan(e) {
+  e.preventDefault();
+  const url = siteInput.value.trim();
+  if (!url) { siteInput.focus(); return; }
+  const btn = $("#site-go");
+  btn.disabled = true;
+  btn.textContent = "Prüfe …";
+  scanState = "loading";
+  render();
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 30000);
+    const r = await fetch("/api/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }), signal: ctrl.signal });
+    clearTimeout(t);
+    const j = await r.json().catch(() => null);
+    if (!j) throw new Error("bad");
+    if (!j.ok) { scan = null; scanError = j.message || "Die Website ließ sich nicht prüfen."; scanState = "error"; }
+    else {
+      scan = j;
+      scanState = "done";
+      if (!userPickedSystem) {
+        const key = j.saas ? "saas" : j.platform && j.platform.key;
+        if (key) setRadio("system", key);
+        const fid = { wordpress: "f-wordpress", typo3: "f-typo3", joomla: "f-joomla", drupal: "f-drupal" }[key];
+        if (fid) document.getElementById(fid).open = true;
+      }
+      if (!domainInput.value.trim()) domainInput.value = hostOf(j.finalUrl);
+    }
+  } catch (err) {
+    scan = null;
+    scanState = "error";
+    scanError = err && err.name === "AbortError" ? "Die Prüfung hat zu lange gedauert. Bitte noch einmal versuchen." : "Der Prüfserver ist gerade nicht erreichbar. Bitte später noch einmal versuchen.";
+  }
+  btn.disabled = false;
+  btn.textContent = "Prüfen";
+  render();
+}
+
+/* ---------- Events ---------- */
+const FINDER = { wordpress: "f-wordpress", typo3: "f-typo3", joomla: "f-joomla", drupal: "f-drupal" };
+$("#pane-url").addEventListener("submit", runScan);
+vInput.addEventListener("input", render);
+domainInput.addEventListener("input", updateMail);
+document.querySelectorAll('input[name="system"], input[name="operator"]').forEach((r) =>
+  r.addEventListener("change", () => {
+    if (r.name === "system") userPickedSystem = true;
+    const id = r.name === "system" ? FINDER[r.value] : r.value === "own" ? "f-server" : null;
+    if (id) document.getElementById(id).open = true;
+    render();
+  })
+);
+
+function flash(btn, msg) {
+  if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+  btn.textContent = msg;
+  clearTimeout(btn._t);
+  btn._t = setTimeout(() => { btn.textContent = btn.dataset.label; }, 1800);
+}
+function selectEl(el) {
+  if (el.select) { el.focus(); el.select(); return; }
+  const r = document.createRange();
+  r.selectNodeContents(el);
+  const s = window.getSelection();
+  s.removeAllRanges();
+  s.addRange(r);
+}
+function copyFrom(btn) {
+  const el = btn.dataset.copy ? (document.getElementById(btn.dataset.copy) || mailBlock.querySelector("#" + btn.dataset.copy)) : btn.closest(".code")?.querySelector("pre");
+  if (!el) return;
+  const text = el.tagName === "TEXTAREA" || el.tagName === "INPUT" ? el.value : el.textContent;
+  const fallback = () => { selectEl(el); flash(btn, "Markiert, jetzt kopieren"); };
+  try { navigator.clipboard.writeText(text).then(() => flash(btn, "Kopiert"), fallback); }
+  catch (_) { fallback(); }
+}
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-mode]");
+  if (tab) { setMode(tab.dataset.mode, false); return; }
+  const sw = e.target.closest("[data-mode-switch]");
+  if (sw) { setMode(sw.dataset.modeSwitch, true); return; }
+  const ex = e.target.closest("[data-ex]");
+  if (ex) { vInput.value = ex.dataset.ex; render(); return; }
+  const sc = e.target.closest("[data-scroll]");
+  if (sc) {
+    e.preventDefault();
+    const t = document.getElementById(sc.dataset.scroll);
+    if (t) t.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    return;
+  }
+  const cb = e.target.closest("[data-copy]");
+  if (cb) copyFrom(cb);
+});
+
+document.getElementById("f-server-body").insertAdjacentHTML("beforeend",
+  codeBlock("Version des Webserver-Prozesses", "php-fpm8.3 -v      # Debian/Ubuntu, Version anpassen\nphp-fpm -v         # RHEL, AlmaLinux, Rocky\napache2ctl -M | grep -i php   # läuft PHP als Apache-Modul?") +
+  "<p class=\"note\">Alternativ kurz eine Datei mit <span class=\"ic\">&lt;?php phpinfo();</span> anlegen, im Browser aufrufen und sofort wieder löschen. Sie verrät viel über den Server.</p>");
+
+render();
+</script>
+</body>
+</html>
