@@ -205,7 +205,7 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
 <div class="wrap">
 
   <header class="top">
-    <p class="advisory"><span class="dot" aria-hidden="true"></span><span>Kritisch</span><span>CVE-2026-109618</span><span>CVE-2026-109619</span><span>CVSS 9.2</span></p>
+    <p class="advisory"><span class="dot" aria-hidden="true"></span><span>Kritisch</span><span>CVE-2026-109618</span><span>CVE-2026-109619</span><span>CVSS 4.0: 9.2</span></p>
     <h1>Ist meine Website von PHP2Shell betroffen?</h1>
     <p class="lede">Zwei Lücken in PHP erlauben Angriffe ohne Login, und erste Angriffe laufen bereits. Geben Sie die Adresse Ihrer Website ein: Der Check liest aus, was Ihr Server über PHP verrät, und sagt Ihnen, ob Sie handeln müssen und was zu tun ist.</p>
   </header>
@@ -234,7 +234,7 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
           <button type="button" class="ex" data-ex="8.3.14">8.3.14</button>
           <button type="button" class="ex" data-ex="8.4.27">8.4.27</button>
           <button type="button" class="ex" data-ex="7.4.33">7.4.33</button>
-          <button type="button" class="ex" data-ex="8.2.29-1~deb12u1">8.2.29-1~deb12u1</button>
+          <button type="button" class="ex" data-ex="8.1.2-1ubuntu2.20">8.1.2-1ubuntu2.20</button>
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
       <details id="f-wordpress" open>
         <summary>WordPress</summary>
         <div class="det">
-          <p><span class="ic">Werkzeuge → Website-Zustand → Bericht → Server</span>, Zeile „PHP-Version“. Direkt dorthin führt die Adresse <span class="ic">ihre-domain.de/wp-admin/site-health.php?tab=debug</span>.</p>
+          <p><span class="ic">Werkzeuge → Website-Zustand → Bericht</span>, dort den Bereich „Server“ aufklappen, Zeile „PHP-Version“. Direkt dorthin führt die Adresse <span class="ic">ihre-domain.de/wp-admin/site-health.php?tab=debug</span>. Die Seite sehen nur Administratoren.</p>
           <p class="note">Ein WordPress-Update ändert die PHP-Version nicht. Das erledigt der Server.</p>
         </div>
       </details>
@@ -320,19 +320,19 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
       <details id="f-typo3">
         <summary>TYPO3</summary>
         <div class="det">
-          <p>Im Backend oben rechts das Menü „Systeminformationen“ öffnen, dort steht die PHP-Version. Alternativ unter <span class="ic">Admin Tools → Environment</span>.</p>
+          <p>Im Backend oben rechts das Info-Symbol „System-Information“ öffnen, Zeile „PHP-Version“ (nur für Administratoren). Alternativ <span class="ic">System → Umgebung</span> (TYPO3 14) bzw. <span class="ic">Verwaltungswerkzeuge → Umgebung</span> (TYPO3 12/13), dort nur für System-Maintainer.</p>
         </div>
       </details>
       <details id="f-joomla">
         <summary>Joomla</summary>
         <div class="det">
-          <p><span class="ic">System → Systeminformationen</span>, Zeile „PHP-Version“.</p>
+          <p><span class="ic">System → Systeminformationen</span>, Zeile „PHP-Version“ (als Super User).</p>
         </div>
       </details>
       <details id="f-drupal">
         <summary>Drupal</summary>
         <div class="det">
-          <p><span class="ic">Berichte → Statusbericht</span>, Zeile „PHP“.</p>
+          <p><span class="ic">Berichte → Statusbericht</span>, Zeile „PHP“ (als Administrator).</p>
         </div>
       </details>
       <details id="f-server">
@@ -354,10 +354,10 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
           <tr><td>PHP 8.4</td><td class="v">8.4.27</td><td></td></tr>
           <tr><td>PHP 8.3</td><td class="v">8.3.36</td><td></td></tr>
           <tr><td>PHP 8.2</td><td class="v">8.2.35</td><td>Updates nur noch bis 31.12.2026</td></tr>
-          <tr class="eol"><td>8.1 und älter</td><td class="v">keine</td><td>Umstieg nötig oder Backport des Anbieters</td></tr>
+          <tr class="eol"><td>8.1 und älter</td><td class="v">keine</td><td>Nur Quell-Patches (7.4 bis 8.1), Backport des Anbieters oder Umstieg</td></tr>
         </tbody>
       </table>
-      <p class="note">Linux-Distributionen spielen Korrekturen teils ein, ohne die Nummer zu erhöhen (Backport). Dann gibt das Paket-Changelog Auskunft.</p>
+      <p class="note">Ubuntu, RHEL und AlmaLinux spielen Korrekturen teils ein, ohne die Nummer zu erhöhen (Backport). Dann gibt das Paket-Changelog Auskunft. Debian liefert dagegen die neue Nummer aus, etwa 8.2.35-1~deb12u1.</p>
     </div>
     <div class="ref-col">
       <h2>Was nicht hilft</h2>
@@ -373,24 +373,28 @@ footer{border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direc
 
   <section class="section facts" aria-labelledby="facts-h">
     <h2 id="facts-h">Was ist passiert?</h2>
-    <p>PHP2Shell ist der Spitzname für zwei Lücken im PHP-Interpreter selbst: CVE-2026-109618 und CVE-2026-109619, beide mit CVSS 9.2 als kritisch eingestuft. Wer sie ausnutzt, kann ohne Anmeldung eigenen Code auf dem Webserver ausführen. Laut den Entdeckern lässt sich außerdem Arbeitsspeicher des Servers auslesen, in dem Passwörter oder Schlüssel stehen können.</p>
-    <p>Betroffen sind alle PHP-Versionen ab 5.4 aus dem Jahr 2012, schon in der Standardkonfiguration, ob PHP als Apache-Modul oder über PHP-FPM läuft. Das betrifft einen Großteil aller Websites, von WordPress über TYPO3 bis zu Online-Shops, Webmail und Cloud-Diensten.</p>
+    <p>PHP2Shell ist der Spitzname für zwei Lücken im PHP-Interpreter selbst: CVE-2026-109618 und CVE-2026-109619, beide mit CVSS 9.2 (Version 4.0) als kritisch eingestuft. Wer sie ausnutzt, kann ohne Anmeldung eigenen Code auf dem Webserver ausführen. Laut den Entdeckern lässt sich außerdem Arbeitsspeicher des Servers auslesen, in dem Passwörter oder Schlüssel stehen können.</p>
+    <p>Laut den Entdeckern reicht der älteste betroffene Code bis PHP 5.4 aus dem Jahr 2012 zurück. Das PHP-Projekt stuft alle PHP-Installationen, die Webanfragen bedienen, als gefährdet ein, schon in der Standardkonfiguration, ob als Apache-Modul (höchstes Risiko) oder über PHP-FPM. Das betrifft einen Großteil aller Websites, von WordPress über TYPO3 bis zu Online-Shops, Webmail und Cloud-Diensten.</p>
     <ol class="timeline">
-      <li><span class="when">20. Oktober 2026</span><span>PHP kündigt ein Notfall-Update an. Erste Details sind da schon durchgesickert.</span></li>
-      <li><span class="when">21. Oktober, morgens</span><span>Cloudflare meldet erste Angriffe, noch bevor Updates verfügbar sind.</span></li>
-      <li><span class="when">21. Oktober, nachmittags</span><span>PHP veröffentlicht 8.5.12, 8.4.27, 8.3.36 und 8.2.35. Analysen und ein Angriffswerkzeug sind seitdem öffentlich.</span></li>
-      <li><span class="when">seitdem</span><span>Behörden und Hochschulen nehmen PHP-Seiten vorsorglich vom Netz. Sicherheitsfirmen beobachten aktive Angriffsversuche.</span></li>
+      <li><span class="when">17. Oktober 2026</span><span>Amazon registriert nach eigener Angabe einen ersten Angriffsversuch auf einen Honeypot, noch vor jeder Veröffentlichung.</span></li>
+      <li><span class="when">20. Oktober</span><span>PHP kündigt ein Notfall-Update an. Erste Details sind da schon durchgesickert.</span></li>
+      <li><span class="when">21. Oktober, morgens</span><span>In der Nacht und am Morgen melden Amazon und Cloudflare weitere Angriffsversuche, noch vor den offiziellen Updates. Behörden und Hochschulen nehmen Websites vorsorglich vom Netz.</span></li>
+      <li><span class="when">21. Oktober, nachmittags</span><span>PHP veröffentlicht 8.5.12, 8.4.27, 8.3.36 und 8.2.35, das BSI warnt. Technische Analysen und Exploit-Code sind öffentlich. Wie zuverlässig die kursierenden Exploits funktionieren, ist umstritten.</span></li>
+      <li><span class="when">seitdem</span><span>Sicherheitsfirmen beobachten aktive Angriffsversuche.</span></li>
     </ol>
   </section>
 
   <section class="section" aria-labelledby="src-h">
     <h2 id="src-h">Quellen</h2>
     <ul class="sources">
+      <li><a href="https://www.php.net/archive/2026.php" target="_blank" rel="noopener">php.net: Sicherheitshinweis vom 21. Oktober 2026</a></li>
       <li><a href="https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w" target="_blank" rel="noopener">PHP-Advisory zu CVE-2026-109618</a></li>
       <li><a href="https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp" target="_blank" rel="noopener">PHP-Advisory zu CVE-2026-109619</a></li>
+      <li><a href="https://www.bsi.bund.de/SharedDocs/Cybersicherheitswarnungen/DE/2026/2026-297981-1032.pdf?__blob=publicationFile&amp;v=3" target="_blank" rel="noopener">BSI-Cybersicherheitswarnung 2026-297981-1032</a></li>
       <li><a href="https://cert.europa.eu/publications/security-advisories/2026-018/" target="_blank" rel="noopener">CERT-EU Security Advisory 2026-018</a></li>
       <li><a href="https://sansec.io/research/php2shell" target="_blank" rel="noopener">Sansec: PHP2Shell</a></li>
-      <li><a href="https://watchtowr.com/intelligence/php-cve-2026-109618-faq/" target="_blank" rel="noopener">watchTowr: FAQ zu PHP2Shell</a></li>
+      <li><a href="https://watchtowr.com/intelligence/php-remote-code-execution-php2shell/" target="_blank" rel="noopener">watchTowr: PHP2Shell</a></li>
+      <li><a href="https://thehackernews.com/2026/10/someone-tried-to-exploit-php2shell-4.html" target="_blank" rel="noopener">The Hacker News: Angriffsversuch schon am 17. Oktober</a></li>
       <li><a href="https://www.security-insider.de/kritische-php-schwachstellen-behoerden-offline-a-607c4678fa935b333a4c48f8efaca22e/" target="_blank" rel="noopener">Security-Insider: Behörden gehen offline</a></li>
     </ul>
   </section>
@@ -425,8 +429,10 @@ function parseVersion(raw) {
   const maj = +m[1], min = +m[2];
   const patch = m[3] === undefined ? null : +m[3];
   const suffix = m[4] || "";
-  if (maj < 4 || maj > 9 || maj === 6) return { kind: "invalid" };
-  const distro = /^[-~+]/.test(suffix) || /ubuntu|deb\d|el\d|fc\d|suse|alpine/i.test(suffix);
+  if (maj < 4 || maj > 9 || maj === 6 || min > 9 || /^\d/.test(suffix)) return { kind: "invalid" };
+  // Debian security updates and deb.sury.org ship the fixed upstream number, so only these distros may hide a backport
+  const upstreamNumbered = /deb\d+u\d|sury/i.test(suffix);
+  const distro = !upstreamNumbered && /ubuntu|el\d|fc\d|suse|sles|amzn/i.test(suffix);
   const branch = maj + "." + min;
   const label = patch === null ? branch : branch + "." + patch;
   const base = { maj, min, patch, branch, label, distro };
@@ -490,17 +496,17 @@ function verdict(v, system) {
     case "safe":
       return { tone: "ok", title: "Gepatcht", detail: `${v.label} enthält die Korrekturen (sicher ab ${v.fix}).` + (v.branch === "8.2" ? " PHP 8.2 bekommt nur noch bis 31.12.2026 Updates." : "") };
     case "vulnerable":
-      return { tone: "bad", title: "Betroffen", detail: `PHP ${v.label} ist verwundbar. Das Update auf ${v.fix} oder neuer schließt die Lücken.` };
+      return { tone: "bad", title: "Betroffen", detail: `PHP ${v.label} ist verwundbar. Das Update auf ${v.fix} oder neuer schließt die Lücken. Einzige Ausnahme: ein Backport der Linux-Distribution, der die alte Nummer behält.` };
     case "backport":
-      return { tone: "warn", title: "Backport prüfen", detail: `Die Nummer liegt unter ${v.fix}, trägt aber einen Distributions-Zusatz. Ob die Korrektur eingespielt ist, zeigt das Paket-Changelog.` };
+      return { tone: "warn", title: "Backport prüfen", detail: `Die Nummer liegt unter ${v.fix}, stammt aber von einer Distribution, die Korrekturen ohne neue Nummer einspielt. Ob das passiert ist, zeigt das Paket-Changelog.` };
     case "eol":
-      return { tone: "bad", title: "Betroffen, kein Update", detail: `Für PHP ${v.branch} gibt es keine offizielle Korrektur. Nötig ist der Umstieg auf PHP 8.4 oder 8.5.` };
+      return { tone: "bad", title: "Betroffen, kein Update", detail: `Für PHP ${v.branch} erscheint keine neue Version mehr. Es gibt nur Quellcode-Patches und Backports einzelner Distributionen. Meist ist der Umstieg auf PHP 8.4 oder 8.5 der richtige Weg.` };
     case "backport-eol":
-      return { tone: "warn", title: "Nur mit Backport sicher", detail: `PHP ${v.branch} bekommt offiziell keine Korrektur mehr. Ihre Nummer hat einen Distributions-Zusatz: Das Paket-Changelog zeigt, ob nachgebessert wurde.` };
+      return { tone: "warn", title: "Nur mit Backport sicher", detail: `PHP ${v.branch} bekommt vom PHP-Projekt keine neue Version mehr. Ihre Distribution liefert Korrekturen aber teils als Backport nach: Das Paket-Changelog zeigt, ob das passiert ist.` };
     case "ancient":
       return { tone: "bad", title: "Veraltet", detail: `PHP ${v.branch} bekommt seit über zehn Jahren keine Sicherheitsupdates. Unabhängig von PHP2Shell: sofort ersetzen.` };
     case "newer":
-      return { tone: "warn", title: "Nicht in der Liste", detail: `PHP ${v.label} ist neuer als alle betroffenen Linien. Ist es eine Vorabversion, prüfen Sie, ob sie nach dem 21.10.2026 erschienen ist.` };
+      return { tone: "warn", title: "Vorabversion", detail: `PHP ${v.label} ist noch nicht final freigegeben. Ob diese Vorabversion die Korrekturen enthält, steht in ihren Release-Hinweisen. Für den Betrieb besser 8.5.12 oder 8.4.27 nutzen.` };
   }
 }
 
@@ -524,8 +530,8 @@ function urlVerdict(system) {
 
 /* ---------- Plan building blocks ---------- */
 const SYS_HINT = {
-  wordpress: "In WordPress: <span class=\"ic\">Werkzeuge → Website-Zustand → Bericht → Server</span>.",
-  typo3: "In TYPO3: Menü „Systeminformationen“ oben rechts im Backend.",
+  wordpress: "In WordPress: <span class=\"ic\">Werkzeuge → Website-Zustand → Bericht</span>, Bereich „Server“ aufklappen.",
+  typo3: "In TYPO3: Info-Symbol „System-Information“ oben rechts im Backend.",
   joomla: "In Joomla: <span class=\"ic\">System → Systeminformationen</span>.",
   drupal: "In Drupal: <span class=\"ic\">Berichte → Statusbericht</span>.",
 };
@@ -533,36 +539,42 @@ const findLink = ' <a href="#finden" data-scroll="finden">Alle Anleitungen</a>';
 const typeItBtn = '<button type="button" class="btn ghost" data-mode-switch="ver">Nummer hier eintippen</button>';
 
 const snip = {
-  version: () => codeBlock("Version des Webserver-Prozesses", `php-fpm${br()} -v      # Debian/Ubuntu, Version anpassen\nphp-fpm -v         # RHEL, AlmaLinux, Rocky`),
+  version: () => codeBlock("Version des Webserver-Prozesses", `sudo php-fpm${br()} -v      # Debian/Ubuntu, Version anpassen\nsudo php-fpm -v         # RHEL, AlmaLinux, Rocky`),
   update: () =>
     codeBlock("Debian / Ubuntu", "sudo apt update && sudo apt upgrade") +
-    codeBlock("RHEL / AlmaLinux / Rocky", "sudo dnf upgrade 'php*'") +
-    codeBlock("Docker (offizielle Images): neu ziehen, dann Container neu bauen", `docker pull php:${cur.kind === "vulnerable" || cur.kind === "backport" ? cur.branch : "8.4"}-fpm`),
+    codeBlock("RHEL / AlmaLinux / Rocky (bei Paketen aus dem Remi-Repository prüfen, ob das Update dort schon da ist)", "sudo dnf upgrade 'php*'") +
+    codeBlock("Docker (offizielle Images): neu ziehen und Container neu bauen; feste Versionsnummern im Dockerfile anheben", `docker pull php:${cur.kind === "vulnerable" || cur.kind === "backport" ? cur.branch : "8.4"}-fpm`),
   restart: () =>
     codeBlock("Je nach Setup eine dieser Zeilen", `sudo systemctl restart php${br()}-fpm   # PHP-FPM, Debian/Ubuntu\nsudo systemctl restart php-fpm        # PHP-FPM, RHEL & Co.\nsudo systemctl restart apache2        # PHP als Apache-Modul (RHEL: httpd)`),
   mitigate: () =>
-    codeBlock("php.ini oder eigene Datei in conf.d (PHP als Apache-Modul)", "session.upload_progress.enabled = 0\nmemory_limit = -1\n; zusätzlich nur bei PHP 8.5:\nfatal_error_backtraces = 0") +
-    codeBlock("PHP-FPM: in jedem Pool", `; z. B. /etc/php/${br()}/fpm/pool.d/www.conf\nphp_admin_flag[session.upload_progress.enabled] = off\nphp_admin_value[memory_limit] = -1\n; zusätzlich nur bei PHP 8.5:\nphp_admin_flag[fatal_error_backtraces] = off`),
+    codeBlock("php.ini oder eigene Datei in conf.d", "memory_limit = -1\npost_max_size = 8M        ; 32M, falls Uploads nötig sind\n; upload_max_filesize muss kleiner als post_max_size sein\nsession.upload_progress.enabled = 0\n; zusätzlich nur bei PHP 8.5:\nfatal_error_backtraces = 0") +
+    codeBlock("PHP als Apache-Modul: im VirtualHost, damit Anwendungen es nicht überschreiben", "php_admin_value memory_limit -1\nphp_admin_value post_max_size 8M\nphp_admin_flag session.upload_progress.enabled off\n# zusätzlich nur bei PHP 8.5:\nphp_admin_flag fatal_error_backtraces off") +
+    codeBlock("PHP-FPM: in jedem Pool", `; z. B. /etc/php/${br()}/fpm/pool.d/www.conf (RHEL & Co.: /etc/php-fpm.d/www.conf)\nphp_admin_value[memory_limit] = -1\nphp_admin_value[post_max_size] = 8M\nphp_admin_flag[session.upload_progress.enabled] = off\n; zusätzlich nur bei PHP 8.5:\nphp_admin_flag[fatal_error_backtraces] = off`),
   forensics: () =>
-    codeBlock("PHP-Dateien, die seit dem 20.10. neu sind oder geändert wurden", "sudo find /var/www -name '*.php' -newermt '2026-10-20' -ls") +
-    codeBlock("Abstürze und Speicherüberläufe in den Logs (Pfade anpassen)", "sudo grep -iE 'segmentation fault|signal 11|memory size of .* exhausted' \\\n  /var/log/apache2/error.log /var/log/php*-fpm.log") +
-    codeBlock("Geplante Aufgaben des Webserver-Benutzers", "sudo crontab -l -u www-data"),
+    codeBlock("PHP-Dateien, die seit dem 17.10. neu sind oder geändert wurden (Pfad anpassen, Upload-Ordner einschließen)", "sudo find /var/www \\( -name '*.php' -o -name '*.phtml' -o -name '*.phar' \\) \\\n  \\( -newermt '2026-10-17' -o -newerct '2026-10-17' \\) -ls") +
+    codeBlock("Abstürze und Speicherüberläufe, inkl. rotierter Logs (Debian/Ubuntu)", "sudo zgrep -iE 'segmentation fault|signal 11|memory size of .* exhausted' \\\n  /var/log/apache2/error.log* /var/log/php*-fpm.log*") +
+    codeBlock("Dasselbe für RHEL & Co.", "sudo zgrep -iE 'segmentation fault|signal 11|memory size of .* exhausted' \\\n  /var/log/httpd/error_log* /var/log/php-fpm/*.log*") +
+    codeBlock("Geplante Aufgaben des Webserver-Benutzers", "sudo crontab -l -u www-data   # Debian/Ubuntu\nsudo crontab -l -u apache     # RHEL & Co. (bei nginx: nginx)"),
   changelog: () =>
-    codeBlock("Debian / Ubuntu (Paketname anpassen)", `apt changelog php${br()}-fpm | grep -E 'CVE-2026-10961[89]'`) +
+    codeBlock("Debian / Ubuntu: Changelog des installierten Pakets", `zgrep -E 'CVE-2026-10961[89]' /usr/share/doc/php${br()}-common/changelog.Debian.gz`) +
     codeBlock("RHEL / AlmaLinux / Rocky", "rpm -q --changelog php-fpm | grep -E 'CVE-2026-10961[89]'"),
 };
 
 function credentialsStep(op) {
   return op === "own"
-    ? { t: "Zugangsdaten wechseln", h: "<p>Die Lücken erlauben laut den Entdeckern auch, Arbeitsspeicher auszulesen. Wechseln Sie Datenbank-Passwörter, API-Schlüssel und andere Geheimnisse der Anwendungen und beenden Sie aktive Sitzungen.</p>" }
+    ? { t: "Zugangsdaten wechseln", h: "<p>Die Lücken erlauben laut den Entdeckern auch, Arbeitsspeicher auszulesen. Wechseln Sie Datenbank-Passwörter, API-Schlüssel und andere Geheimnisse der Anwendungen und beenden Sie aktive Sitzungen. Läuft PHP als Apache-Modul, tauschen Sie auch den TLS-Schlüssel des Servers.</p>" }
     : { t: "Nach dem Update: Zugangsdaten wechseln", h: "<p>Die Lücken erlauben laut den Entdeckern auch, Arbeitsspeicher auszulesen. Wechseln Sie Admin-, SFTP- und Datenbank-Passwörter sowie API-Schlüssel, die die Website nutzt.</p>" };
 }
 const otherAppsStep = { t: "Andere PHP-Anwendungen mitdenken", h: "<p>Webmail, Cloud-Speicher, Intranet, Shop, Ticket- oder Buchungssystem: Alles, was aus dem Internet erreichbar ist und auf PHP läuft, braucht dasselbe Update.</p>" };
-const forensicsText = "<p class=\"note\">Ein Treffer ist kein Beweis, aber ein Grund, genauer hinzusehen. Prüfen Sie auch, ob im CMS neue Admin-Konten aufgetaucht sind. Bei Hinweisen auf einen Einbruch ziehen Sie Fachleute hinzu. Sind personenbezogene Daten betroffen, gilt die 72-Stunden-Meldefrist an die Datenschutzaufsicht (Art. 33 DSGVO).</p>";
+const forensicsText = "<p class=\"note\">Ein Treffer ist kein Beweis, aber ein Grund, genauer hinzusehen. Umgekehrt ist kein Treffer keine Entwarnung: Ein erfolgreicher Angriff hinterlässt nicht zwingend Spuren. Achten Sie auch auf gehäufte Serverfehler (HTTP 500) und ungewöhnliche multipart-Anfragen in den Zugriffslogs. Prüfen Sie außerdem, ob im CMS neue Admin-Konten aufgetaucht sind. Bei Hinweisen auf einen Einbruch ziehen Sie Fachleute hinzu. Sind personenbezogene Daten betroffen, müssen Sie als Verantwortlicher den Vorfall in der Regel unverzüglich und möglichst binnen 72 Stunden der Datenschutzaufsicht melden (Art. 33 DSGVO), außer es besteht voraussichtlich kein Risiko für die Betroffenen. Dokumentieren Sie den Vorfall in jedem Fall.</p>";
 
+function safeHttpUrl(u) {
+  try { const x = new URL(u); return x.protocol === "http:" || x.protocol === "https:" ? x.href : null; } catch { return null; }
+}
 function adminStepHtml(admin) {
   return `<p>Melden Sie sich an, der Link führt direkt zur richtigen Seite. Dort: ${esc(admin.where)}.</p>` +
-    `<div class="actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>`;
+    `<div class="actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>` +
+    (admin.fallback ? `<p class="note">${esc(admin.fallback)}</p>` : "");
 }
 
 function buildPlan(v, system, op) {
@@ -590,8 +602,8 @@ function buildPlan(v, system, op) {
   if (group === "safe") {
     if (isOwn) steps.push({ t: "Prüfen, ob die Website diese Version nutzt", h: "<p>Stammt die Nummer aus <span class=\"ic\">php -v</span>, zeigt sie nur die Kommandozeile. Kontrollieren Sie die Version in einer echten Web-Anfrage, etwa in der Systeminfo des CMS, und ob alle PHP-Prozesse nach dem Update neu gestartet wurden.</p>" + snip.restart() });
     steps.push(isOwn
-      ? { t: "Zeit vor dem Update prüfen", h: "<p>Erste Angriffe gab es am Morgen des 21. Oktober, noch vor den Updates. Wurde erst danach gepatcht, lohnt ein Blick auf Spuren.</p>" + snip.forensics() + forensicsText }
-      : { t: "Zeit vor dem Update prüfen", h: "<p>Erste Angriffe gab es am Morgen des 21. Oktober, noch vor den Updates. Fragen Sie Hoster oder Dienstleister, wann gepatcht wurde und ob es Auffälligkeiten gab.</p>" });
+      ? { t: "Zeit vor dem Update prüfen", h: "<p>Einen ersten Angriffsversuch gab es laut Amazon schon am 17. Oktober, weitere ab der Nacht zum 21. Oktober, also vor den Updates. Wurde erst danach gepatcht, lohnt ein Blick auf Spuren.</p>" + snip.forensics() + forensicsText }
+      : { t: "Zeit vor dem Update prüfen", h: "<p>Einen ersten Angriffsversuch gab es laut Amazon schon am 17. Oktober, weitere ab der Nacht zum 21. Oktober, also vor den Updates. Fragen Sie Hoster oder Dienstleister, wann gepatcht wurde und ob es seit dem 17. Oktober Auffälligkeiten gab.</p>" });
     if (v.branch === "8.2") steps.push({ t: "Umstieg planen", h: "<p>PHP 8.2 bekommt nur noch bis 31.12.2026 Sicherheitsupdates. Planen Sie den Wechsel auf 8.4 oder 8.5 und testen Sie vorher, ob CMS und Erweiterungen mitspielen.</p>" });
     steps.push(otherAppsStep);
     return { tone: "ok", sub: "Ihre Version ist in Ordnung. Ein paar Punkte bleiben.", steps };
@@ -600,11 +612,11 @@ function buildPlan(v, system, op) {
   if (group === "act") {
     if (isOwn) {
       steps.push({ t: "PHP aktualisieren", h: (upgradeOnly
-        ? `<p>Für PHP ${v.branch} gibt es keine offizielle Korrektur. Steigen Sie auf 8.4 oder 8.5 um, oder nutzen Sie ein Distributionspaket mit Backport und prüfen Sie dessen Changelog. Vorher Sicherung anlegen und Kompatibilität der Anwendungen testen.</p>`
-        : `<p>Ziel ist ${v.fix} oder neuer, bzw. das Paket Ihrer Distribution mit den Korrekturen.</p>`) + snip.update() });
+        ? `<p>Für PHP ${v.branch} erscheint keine neue Version mehr. Für 7.4 bis 8.1 gibt es nur Quellcode-Patches zum Selbstkompilieren, manche Distributionen liefern Backports (Changelog prüfen). Sonst hilft der Umstieg auf 8.4 oder 8.5. Vorher Sicherung anlegen und Kompatibilität der Anwendungen testen.</p>`
+        : `<p>Ziel ist ${v.fix} oder neuer, bzw. das Paket Ihrer Distribution mit den Korrekturen. Bei Ubuntu, RHEL, AlmaLinux oder Rocky kann der Fix auch in einem Paket mit alter Nummer stecken; das Changelog zeigt es.</p>`) + snip.update() + (upgradeOnly ? "" : snip.changelog()) });
       steps.push({ t: "Alle PHP-Prozesse neu starten", h: "<p>Erst nach dem Neustart laufen die korrigierten Fassungen. Prüfen Sie die Version danach über die Website selbst, nicht nur mit <span class=\"ic\">php -v</span>.</p>" + snip.restart() });
-      steps.push({ t: "Falls das Update warten muss", h: "<p>Diese Einstellungen aus den PHP-Advisories sind nur ein Teilschutz und ersetzen das Update nicht. Danach alle Worker neu starten.</p>" + snip.mitigate() + "<p class=\"note\">Mit <span class=\"ic\">memory_limit = -1</span> kann eine einzelne Anfrage den ganzen Arbeitsspeicher belegen. Beobachten Sie die Auslastung und stellen Sie das Limit nach dem Update zurück. Weitere Optionen: Anfragen mit <span class=\"ic\">multipart/form-data</span> am Webserver oder in der WAF sperren (das bricht Datei-Uploads und manche Formulare) oder die Seite durch eine statische Wartungsseite ersetzen.</p>" });
-      steps.push({ t: "Spuren prüfen", h: "<p>Angriffe liefen schon vor den Updates. Schauen Sie nach, ob seit dem 20. Oktober etwas Ungewöhnliches passiert ist.</p>" + snip.forensics() + forensicsText });
+      steps.push({ t: "Falls das Update warten muss", h: "<p>Am sichersten ist es, die Seite bis zum Update vom Netz zu nehmen oder durch eine statische Wartungsseite zu ersetzen. Geht das nicht, setzen Sie alle folgenden Einstellungen aus dem PHP-Advisory und starten danach alle Worker neu. Sie senken das Risiko, schützen aber nicht vollständig.</p>" + snip.mitigate() + "<p class=\"note\">Mit <span class=\"ic\">memory_limit = -1</span> kann eine einzelne Anfrage den ganzen Arbeitsspeicher belegen. Setzen Sie als Ausgleich ein Speicherlimit für Container oder cgroup, aber kein <span class=\"ic\">ulimit -v</span> (RLIMIT_AS oder RLIMIT_DATA), das löst den verwundbaren Ablauf gerade aus. Prüfen Sie, dass keine Pool-, .htaccess- oder Anwendungseinstellung wieder ein Speicherlimit setzt, und entfernen Sie ungültige oder veraltete <span class=\"ic\">php_value</span>-Zeilen aus .htaccess. Zusätzlich möglich: Anfragen vom Typ <span class=\"ic\">multipart/form-data</span> am Webserver oder in der WAF sperren (betrifft Datei-Uploads und manche Formulare). Nach dem Update das Speicherlimit zurückstellen.</p>" });
+      steps.push({ t: "Spuren prüfen", h: "<p>Angriffe liefen schon vor den Updates. Schauen Sie nach, ob seit dem 17. Oktober etwas Ungewöhnliches passiert ist.</p>" + snip.forensics() + forensicsText });
       steps.push(credentialsStep(op));
     } else if (op === "hoster") {
       steps.push({ t: upgradeOnly ? "Auf PHP 8.4 oder 8.5 umstellen" : "Korrigierte Version aktivieren", h: upgradeOnly
@@ -615,7 +627,7 @@ function buildPlan(v, system, op) {
       steps.push(credentialsStep(op));
     } else if (op === "agency") {
       steps.push(mailStep("Dienstleister heute anschreiben", "<p>Das Update muss auf dem Server passieren. Ein CMS- oder Plugin-Update reicht nicht.</p>"));
-      steps.push({ t: "Übergangslösung vereinbaren", h: "<p>Klappt das Update nicht heute, bitten Sie um eine statische Wartungsseite oder darum, Datei-Upload-Anfragen am Webserver zu sperren, bis gepatcht ist.</p>" });
+      steps.push({ t: "Übergangslösung vereinbaren", h: "<p>Klappt das Update nicht heute, bitten Sie um eine statische Wartungsseite oder darum, Anfragen vom Typ multipart/form-data am Webserver zu sperren (betrifft Datei-Uploads und manche Formulare), bis gepatcht ist.</p>" });
       steps.push(credentialsStep(op));
     } else {
       steps.push({ t: "Zuständige Stelle herausfinden", h: "<p>Wer stellt Webhosting oder Domain in Rechnung? Steht in Vertrag oder Impressum eine Agentur? Diese Stelle muss das Update einspielen. Wählen Sie oben aus, wer es ist, dann passt sich der Fahrplan an.</p>" });
@@ -634,18 +646,18 @@ function buildPlan(v, system, op) {
       steps.push(mailStep(op === "agency" ? "Beim Dienstleister nachfragen" : op === "hoster" ? "Beim Hoster nachfragen" : "Beim Betreiber nachfragen", "<p>Ob ein Backport eingespielt ist, kann nur der Betreiber des Servers sicher sagen.</p>"));
     }
     steps.push(otherAppsStep);
-    return { tone: "warn", sub: "Wahrscheinlich gut, aber erst Gewissheit holen.", steps };
+    return { tone: "warn", sub: "Unklar: Ob die Korrektur drin ist, zeigt nur das Paket-Changelog.", steps };
   }
 
   if (group === "newer") {
-    steps.push({ t: "Veröffentlichungsdatum prüfen", h: "<p>Erschien die Version nach dem 21. Oktober 2026, enthält sie die Korrekturen. Bei Vorabversionen (RC, Beta) lieber auf eine stabile, korrigierte Version wechseln.</p>" });
+    steps.push({ t: "Release-Hinweise prüfen", h: "<p>Vorabversionen sind betroffen, wenn sie vor den Korrekturen gebaut wurden. Ob Ihre Version die Fixes enthält, steht in den Release-Hinweisen auf php.net. Für den Produktivbetrieb auf 8.5.12 oder 8.4.27 wechseln.</p>" });
     steps.push(otherAppsStep);
-    return { tone: "warn", sub: "Vermutlich unkritisch.", steps };
+    return { tone: "warn", sub: "Vorabversion: erst Release-Hinweise prüfen.", steps };
   }
 
   // find
   let sub = "Erst Gewissheit, dann handeln.";
-  const admin = s && s.platform && s.platform.admin;
+  const admin = s && s.platform && s.platform.admin && safeHttpUrl(s.platform.admin.url) ? s.platform.admin : null;
   if (admin) {
     steps.push({ t: `Version in ${s.platform.name.replace(" mit WooCommerce", "")} nachsehen`, h: adminStepHtml(admin) });
     sub = "Ihre Website läuft auf PHP. Jetzt fehlt nur die genaue Versionsnummer.";
@@ -686,10 +698,11 @@ function renderFindings() {
   $("#f-list").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
 
   const next = $("#f-next");
-  const admin = scan.platform && scan.platform.admin;
+  const admin = scan.platform && scan.platform.admin && safeHttpUrl(scan.platform.admin.url) ? scan.platform.admin : null;
   if (mode === "url" && !scan.php.version && scan.php.detected === "yes" && admin) {
     next.hidden = false;
-    next.innerHTML = `<p><strong>So finden Sie die Nummer in einer Minute:</strong> In ${esc(scan.platform.name.replace(" mit WooCommerce", ""))} anmelden, dann ${esc(admin.where)}.</p><div class="next-actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>`;
+    next.innerHTML = `<p><strong>So finden Sie die Nummer in einer Minute:</strong> In ${esc(scan.platform.name.replace(" mit WooCommerce", ""))} anmelden, dann ${esc(admin.where)}.</p><div class="next-actions"><a class="btn" href="${esc(admin.url)}" target="_blank" rel="noopener">${esc(admin.label)} ↗</a>${typeItBtn}</div>` +
+      (admin.fallback ? `<p class="note">${esc(admin.fallback)}</p>` : "");
   } else next.hidden = true;
 }
 
@@ -703,14 +716,14 @@ function updateMail() {
   mailBody.value =
 `Guten Tag,
 
-am 21. Oktober 2026 hat das PHP-Projekt Sicherheitsupdates für zwei kritische Lücken veröffentlicht (CVE-2026-109618 und CVE-2026-109619, bekannt als „PHP2Shell“). Darüber können Angreifer ohne Anmeldung eigenen Code auf dem Webserver ausführen. Erste Angriffe wurden bereits beobachtet.${ver}
+am 21. Oktober 2026 hat das PHP-Projekt Sicherheitsupdates für zwei kritische Lücken veröffentlicht (CVE-2026-109618 und CVE-2026-109619, bekannt als „PHP2Shell“). Darüber können Angreifer ohne Anmeldung eigenen Code auf dem Webserver ausführen. Angriffsversuche werden bereits beobachtet.${ver}
 
 Bitte teilen Sie uns für ${target} mit:
 
 1. Welche PHP-Version läuft dort aktuell (vollständige Nummer, z. B. 8.3.36)?
 2. Enthält sie die Korrekturen, also PHP 8.5.12, 8.4.27, 8.3.36, 8.2.35 oder neuer bzw. ein Paket mit eingespieltem Backport?
 3. Falls nein: Bis wann wird aktualisiert, und welche Übergangsmaßnahmen sind bis dahin aktiv?
-4. Gab es seit dem 20. Oktober Hinweise auf Angriffe oder Auffälligkeiten?
+4. Gab es seit dem 17. Oktober Hinweise auf Angriffe oder Auffälligkeiten?
 5. Laufen für uns weitere PHP-Anwendungen (z. B. Webmail, Shop, Cloud), die ebenfalls aktualisiert werden müssen?
 
 Vielen Dank für eine kurze Rückmeldung.
@@ -865,8 +878,8 @@ document.addEventListener("click", (e) => {
 });
 
 document.getElementById("f-server-body").insertAdjacentHTML("beforeend",
-  codeBlock("Version des Webserver-Prozesses", "php-fpm8.3 -v      # Debian/Ubuntu, Version anpassen\nphp-fpm -v         # RHEL, AlmaLinux, Rocky\napache2ctl -M | grep -i php   # läuft PHP als Apache-Modul?") +
-  "<p class=\"note\">Alternativ kurz eine Datei mit <span class=\"ic\">&lt;?php phpinfo();</span> anlegen, im Browser aufrufen und sofort wieder löschen. Sie verrät viel über den Server.</p>");
+  codeBlock("Version des Webserver-Prozesses", "sudo php-fpm8.3 -v      # Debian/Ubuntu, Version anpassen\nsudo php-fpm -v         # RHEL, AlmaLinux, Rocky\napache2ctl -M | grep -i php   # PHP als Apache-Modul? (Debian/Ubuntu)\nhttpd -M | grep -i php        # dasselbe für RHEL & Co.") +
+  "<p class=\"note\">Alternativ kurz eine Datei mit zufälligem Namen und dem Inhalt <span class=\"ic\">&lt;?php phpinfo();</span> anlegen, im Browser aufrufen und sofort wieder löschen. Sie verrät viel über den Server.</p>");
 
 render();
 </script>

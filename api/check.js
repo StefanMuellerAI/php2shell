@@ -45,6 +45,13 @@ function isBlockedIp(ip) {
     if (/^ff/.test(s)) return true;               // multicast
     if (/^2001:0?db8:/.test(s)) return true;      // documentation
     if (/^64:ff9b:/.test(s)) return true;         // NAT64
+    const sixToFour = s.match(/^2002:([0-9a-f]{1,4}):([0-9a-f]{1,4}):/);   // 6to4 embeds an IPv4 address
+    if (sixToFour) {
+      const h = sixToFour[1].padStart(4, "0") + sixToFour[2].padStart(4, "0");
+      const v4 = [0, 2, 4, 6].map((i) => parseInt(h.slice(i, i + 2), 16)).join(".");
+      if (isBlockedIp(v4)) return true;
+    }
+    if (/^2001:(0:|:)/.test(s)) return true;      // Teredo
     if (/^::/.test(s)) return true;               // other IPv4-compatible / reserved
     if (/^100::/.test(s)) return true;            // discard
     return false;
@@ -97,13 +104,20 @@ function normalize(input) {
 }
 
 /* ---------- one request ---------- */
+const MAX_DECODED = 8 * 1024 * 1024;
 function decodeBody(buf, encoding, contentType) {
+  // maxOutputLength guards against decompression bombs from the checked site
+  const enc = String(encoding || "").toLowerCase();
+  const lim = { maxOutputLength: MAX_DECODED };
   try {
-    const enc = String(encoding || "").toLowerCase();
-    if (enc.includes("gzip")) buf = zlib.gunzipSync(buf, { finishFlush: zlib.constants.Z_SYNC_FLUSH });
-    else if (enc.includes("br")) buf = zlib.brotliDecompressSync(buf, { finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH });
-    else if (enc.includes("deflate")) buf = zlib.inflateSync(buf, { finishFlush: zlib.constants.Z_SYNC_FLUSH });
-  } catch { /* keep raw */ }
+    if (enc.includes("gzip")) buf = zlib.gunzipSync(buf, { ...lim, finishFlush: zlib.constants.Z_SYNC_FLUSH });
+    else if (enc.includes("br")) buf = zlib.brotliDecompressSync(buf, { ...lim, finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH });
+    else if (enc.includes("deflate")) {
+      try { buf = zlib.inflateSync(buf, { ...lim, finishFlush: zlib.constants.Z_SYNC_FLUSH }); }
+      catch { buf = zlib.inflateRawSync(buf, { ...lim, finishFlush: zlib.constants.Z_SYNC_FLUSH }); }
+    }
+  } catch { /* too large or broken: keep raw bytes */ }
+  if (buf.length > MAX_DECODED) buf = buf.subarray(0, MAX_DECODED);
   const cs = (String(contentType || "").match(/charset=([\w-]+)/i) || [])[1] || "utf-8";
   try { return new TextDecoder(cs).decode(buf); } catch { return buf.toString("latin1"); }
 }
@@ -156,18 +170,17 @@ function isConnError(e) { return ["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "EH
 async function crawl(start, deadline) {
   let u = start;
   const hops = [];
-  let insecure = false;
   let certProblem = false;
   for (let i = 0; i <= MAX_REDIRECTS; i++) {
     validateUrl(u);
     if (Date.now() > deadline) { const e = new Error("timeout"); e.code = "ETIMEDOUT"; throw e; }
     let r;
     try {
-      r = await fetchOnce(u, deadline, insecure);
+      r = await fetchOnce(u, deadline, false);
     } catch (e) {
-      if (!insecure && isTlsError(e) && u.protocol === "https:") {
-        // Reading public headers needs no trust in the certificate; we report the problem instead.
-        insecure = true; certProblem = true;
+      if (isTlsError(e) && u.protocol === "https:") {
+        // Reading public headers needs no trust in the certificate; retry this hop only and report it.
+        certProblem = true;
         r = await fetchOnce(u, deadline, true);
       } else throw e;
     }

@@ -115,17 +115,29 @@ function generatorTags(html) {
 
 function adminLink(platform, finalUrl, wpBase) {
   let origin;
-  try { origin = new URL(finalUrl).origin; } catch { return null; }
+  try {
+    const f = new URL(finalUrl);
+    if (f.protocol !== "http:" && f.protocol !== "https:") return null;
+    origin = f.origin;
+  } catch { return null; }
+  // wpBase comes from the checked site's Link header: only accept it on the same origin
+  let base = origin + "/";
+  if (wpBase) {
+    try {
+      const b = new URL(wpBase, finalUrl);
+      if (b.origin === origin) base = b.origin + b.pathname.replace(/[^/]*$/, "");
+    } catch { /* ignore */ }
+  }
   switch (platform) {
     case "WordPress":
     case "WooCommerce":
-      return { url: (wpBase || origin + "/") + "wp-admin/site-health.php?tab=debug", label: "WordPress: Website-Zustand öffnen", where: "Bereich „Server“ aufklappen, Zeile „PHP-Version“" };
+      return { url: base + "wp-admin/site-health.php?tab=debug", label: "WordPress: Website-Zustand öffnen", where: "Bereich „Server“ aufklappen, Zeile „PHP-Version“ (nur für Administratoren sichtbar)", fallback: "Lädt die Seite nicht, melden Sie sich unter /wp-admin an und öffnen Werkzeuge → Website-Zustand → Bericht." };
     case "Joomla":
-      return { url: origin + "/administrator/index.php?option=com_admin&view=sysinfo", label: "Joomla: Systeminformationen öffnen", where: "Zeile „PHP-Version“" };
+      return { url: origin + "/administrator/index.php?option=com_admin&view=sysinfo", label: "Joomla: Systeminformationen öffnen", where: "Zeile „PHP-Version“ (nur für Super User)" };
     case "Drupal":
-      return { url: origin + "/admin/reports/status", label: "Drupal: Statusbericht öffnen", where: "Zeile „PHP“" };
+      return { url: origin + "/admin/reports/status", label: "Drupal: Statusbericht öffnen", where: "Zeile „PHP“ (nur für Administratoren)" };
     case "TYPO3":
-      return { url: origin + "/typo3/", label: "TYPO3-Backend öffnen", where: "Menü „Systeminformationen“ oben rechts" };
+      return { url: origin + "/typo3/", label: "TYPO3-Backend öffnen", where: "oben rechts das Info-Symbol „System-Information“, Zeile „PHP-Version“ (nur für Administratoren)", fallback: "Liegt Ihr Backend unter einer anderen Adresse als /typo3/, melden Sie sich dort an." };
     default:
       return null;
   }
